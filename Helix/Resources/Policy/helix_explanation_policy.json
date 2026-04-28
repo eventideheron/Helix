@@ -1,0 +1,237 @@
+{
+  "policy_version": "1.7",
+  "created": "2026-03-10",
+  "updated": "2026-04-10",
+  "status": "active",
+  "description": "Thresholds and plain-English language templates for score decomposition. v1.1 reconstructs strings truncated by PDF extraction and adds missing_age key for Tanaka fallback signaling. v1.2 adds disturbance templates for awakenings-per-hour routing. v1.3 adds medium_confidence_full_signals for medium tier when no signals are missing. v1.4 adds hr_elevation signal thresholds and language templates for Load strand HR elevation.",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-03-10",
+      "notes": "Initial release."
+    },
+    {
+      "version": "1.1",
+      "date": "2026-03-10",
+      "notes": "CRITICAL FIX: Reconstructed all language strings truncated in PDF extraction. Added missing_age confidence language key for Tanaka formula fallback."
+    },
+    {
+      "version": "1.2",
+      "date": "2026-03-30",
+      "notes": "Added disturbance language_templates section for awakeningsPerHour explanation routing. Previous implementation incorrectly used sleep_consistency.* keys."
+    },
+    {
+      "version": "1.3",
+      "date": "2026-03-30",
+      "notes": "Added confidence_language.medium_confidence_full_signals for medium confidence when all expected signals are present (avoids implying missing data)."
+    },
+    {
+      "version": "1.4",
+      "date": "2026-04-01",
+      "notes": "Added signal_thresholds.hr_elevation and language_templates.hr_elevation for Load strand workout HR vs resting baseline scoring explanations."
+    },
+    {
+      "version": "1.5",
+      "date": "2026-04-06",
+      "notes": "Removed prescriptive language from acwr.very_high. Explanation now describes physiological state only, consistent with design_principles governance rule."
+    },
+    {
+      "version": "1.6",
+      "date": "2026-04-06",
+      "notes": "Removed prescriptive sentence from hrv.strong_drop. Description now states physiological condition only."
+    },
+    {
+      "version": "1.7",
+      "date": "2026-04-10",
+      "notes": "Added strand_sleep, strand_load, strand_recovery to language_templates for strand-level primaryExplanation narratives. Strand headlines no longer use top signal contributor copy."
+    }
+  ],
+  "design_principles": {
+    "language_rule": "Explanation language describes physiological state only. It does not prescribe action, suggest training decisions, or imply clinical or coaching guidance.",
+    "rationale": "Helix is a readiness instrument, not a coach or clinician. The user interprets and acts. Helix informs.",
+    "directional_language_permitted": "Describing what a signal value means relative to baseline, describing the physiological process associated with a signal, describing a pattern factually without directing a response.",
+    "applies_to": ["language_templates", "posture_language", "confidence_language"],
+    "enforcement": "Agent reviewers (GI, CG) must flag any language string that violates this rule before certification."
+  },
+  "signal_thresholds": {
+    "hrv": {
+      "notable_drop_percent": 0.05,
+      "significant_drop_percent": 0.1,
+      "strong_drop_percent": 0.2,
+      "notable_rise_percent": 0.05,
+      "significant_rise_percent": 0.1
+    },
+    "resting_hr": {
+      "notable_rise_bpm": 2.0,
+      "significant_rise_bpm": 4.0,
+      "strong_rise_bpm": 7.0,
+      "notable_drop_bpm": 2.0
+    },
+    "sleep_duration": {
+      "notable_deficit_hours": 0.5,
+      "significant_deficit_hours": 1.0,
+      "strong_deficit_hours": 1.5,
+      "notable_surplus_hours": 1.0
+    },
+    "sleep_consistency": {
+      "notable_variance_minutes": 20,
+      "significant_variance_minutes": 40
+    },
+    "respiratory_rate": {
+      "notable_change_brpm": 1.0,
+      "significant_change_brpm": 2.5
+    },
+    "wrist_temperature": {
+      "notable_deviation_celsius": 0.4,
+      "significant_deviation_celsius": 0.8
+    },
+    "overnight_hr_dip": {
+      "strong_dip_bpm": 12.0,
+      "moderate_dip_bpm": 8.0,
+      "shallow_dip_bpm": 4.0
+    },
+    "acwr": {
+      "high_load_threshold": 1.3,
+      "very_high_load_threshold": 1.5,
+      "low_load_threshold": 0.7
+    },
+    "hr_elevation": {
+      "high_strain_threshold": 85,
+      "moderate_strain_threshold": 75
+    }
+  },
+  "language_templates": {
+    "hrv": {
+      "strong_drop": "Your nervous system is under notable stress \u2014 HRV is well below your baseline.",
+      "significant_drop": "Your nervous system is more stressed than usual \u2014 HRV is below your normal range. Consider reducing intensity.",
+      "notable_drop": "HRV is slightly below your baseline. Your body is processing some accumulated stress.",
+      "within_baseline": "HRV is within your normal range.",
+      "notable_rise": "HRV is above your baseline \u2014 a good sign your nervous system recovered well overnight.",
+      "significant_rise": "Strong HRV reading. Your autonomic system is in an excellent recovery state."
+    },
+    "resting_hr": {
+      "strong_rise": "Resting heart rate is significantly elevated \u2014 a strong signal of fatigue, illness, or incomplete recovery.",
+      "significant_rise": "Resting heart rate is elevated above your baseline \u2014 often a sign of accumulated fatigue or early illness.",
+      "notable_rise": "Resting HR is slightly above your normal. Worth monitoring over the next day or two.",
+      "within_baseline": "Resting heart rate is at your normal level.",
+      "notable_drop": "Resting HR is below your baseline \u2014 a positive cardiovascular adaptation signal."
+    },
+    "sleep_duration": {
+      "strong_deficit": "Significant sleep deficit last night. Your body had much less restoration time than it needs.",
+      "significant_deficit": "You slept less than your usual amount. Recovery processes had a shorter window to complete.",
+      "notable_deficit": "Slightly shorter sleep than your normal. Minor impact on today's recovery.",
+      "within_optimal": "Sleep duration was within your optimal window.",
+      "surplus": "You slept longer than usual \u2014 your body may have needed the extra restoration time."
+    },
+    "deep_sleep": {
+      "below_baseline": "Deep sleep was below your normal percentage. Physical restoration may be incomplete.",
+      "within_baseline": "Deep sleep was within your normal range.",
+      "above_baseline": "Strong deep sleep percentage \u2014 physical restoration was thorough."
+    },
+    "rem_sleep": {
+      "below_baseline": "REM sleep was below your normal percentage. Cognitive restoration and memory consolidation may be affected.",
+      "within_baseline": "REM sleep was within your normal range.",
+      "above_baseline": "Strong REM percentage \u2014 cognitive restoration was thorough."
+    },
+    "sleep_consistency": {
+      "significant_variance": "Irregular sleep timing this week is affecting your circadian rhythm. Consistent sleep and wake times improve overall sleep quality.",
+      "notable_variance": "Bedtime has varied more than usual. Consistent timing strongly supports circadian alignment.",
+      "consistent": "Sleep timing has been consistent this week. Your circadian rhythm is well-supported."
+    },
+    "disturbance": {
+      "low": "Sleep was undisturbed last night \u2014 very few awakenings relative to your normal.",
+      "within_baseline": "Sleep fragmentation was within your normal range.",
+      "elevated": "More awakenings than usual last night. Fragmented sleep reduces restoration quality."
+    },
+    "overnight_hr_dip": {
+      "strong": "Your heart rate dropped deeply during sleep \u2014 a strong sign your nervous system fully shifted into recovery mode.",
+      "moderate": "Moderate overnight heart rate dip. Your nervous system partially recovered during sleep.",
+      "shallow": "Shallow overnight heart rate dip suggests your nervous system stayed partially activated during sleep. This can reflect stress, alcohol, or incomplete recovery."
+    },
+    "wrist_temperature": {
+      "elevated": "Your wrist temperature was above your normal overnight. This can reflect immune activity, alcohol metabolism, or hormonal variation.",
+      "stable": "Overnight temperature was stable and within your normal range.",
+      "depressed": "Wrist temperature was slightly below your normal overnight. Worth noting but rarely significant in isolation."
+    },
+    "acwr": {
+      "very_high": "Training load this week significantly exceeds your recent capacity.",
+      "high": "You have trained harder than usual recently. That is a productive stimulus \u2014 balance it with adequate recovery.",
+      "optimal": "Training load is well-balanced relative to your recent capacity.",
+      "low": "Training volume is below your recent baseline. Fine for a recovery week \u2014 consider rebuilding gradually if unintentional."
+    },
+    "training_volume": {
+      "high": "Training volume this week is elevated relative to your recent output.",
+      "moderate": "Training volume is above your recent average.",
+      "optimal": "Training volume is consistent with your recent baseline.",
+      "low": "Training volume is below your recent baseline."
+    },
+    "activity_completion": {
+      "high": "Activity level this week is above your recent norm.",
+      "optimal": "Activity level is consistent with your recent baseline.",
+      "low": "Activity level is below your recent baseline."
+    },
+    "hr_elevation": {
+      "high_strain": "Average workout heart rate was much higher than your personal resting baseline \u2014 a strong cardiovascular strain signal today.",
+      "moderate_strain": "Workout heart rate ran noticeably above your resting baseline \u2014 meaningful but not extreme strain.",
+      "low_strain": "Workout heart rate stayed relatively close to your resting baseline \u2014 a lower strain profile for this session block."
+    },
+    "respiratory": {
+      "elevated": "Respiratory rate was above your baseline overnight. This can be an early signal of illness, altitude adjustment, or elevated stress.",
+      "stable": "Breathing rate was stable and within your normal overnight range."
+    },
+    "strand_sleep": {
+      "strong": "Sleep architecture and duration were both in strong range last night.",
+      "good": "Sleep quality was above your normal \u2014 most signals were in a positive range.",
+      "moderate": "Mixed sleep picture \u2014 some signals were strong while others were below your normal.",
+      "low": "Sleep quality was below your normal across multiple signals last night.",
+      "poor": "Several sleep signals were significantly below your baseline last night."
+    },
+    "strand_load": {
+      "very_high": "Training load this week significantly exceeds your recent capacity.",
+      "high": "Training load is above your recent average \u2014 a meaningful stimulus.",
+      "optimal": "Training load is well-balanced relative to your recent capacity.",
+      "low": "Training volume is below your recent baseline.",
+      "very_low": "Training volume is significantly below your recent baseline."
+    },
+    "strand_recovery": {
+      "strong": "Autonomic recovery looks strong \u2014 key signals align with high readiness.",
+      "good": "Recovery signals are mostly positive \u2014 your nervous system recovered well overnight.",
+      "moderate": "Mixed recovery picture \u2014 some signals are strong while others are holding the score back.",
+      "low": "Recovery signals are below your normal range across multiple markers.",
+      "poor": "Autonomic stress indicators are elevated across several signals."
+    }
+  },
+  "posture_language": {
+    "pursue": {
+      "headline": "PURSUE",
+      "subtext": "All three strands are in strong alignment. Your body is ready for meaningful effort today."
+    },
+    "moderate": {
+      "headline": "MODERATE",
+      "subtext": "One strand is recovering. Normal to moderate effort is appropriate \u2014 identify the recovering strand and adjust accordingly."
+    },
+    "restore": {
+      "headline": "RESTORE",
+      "subtext": "Your triple helix needs time to recover. Easy movement, good nutrition, and early sleep will rebuild all three strands."
+    }
+  },
+  "confidence_language": {
+    "high": "All signals present \u2014 high confidence.",
+    "medium_confidence_full_signals": "Medium confidence \u2014 all expected signals are present; the label reflects policy thresholds rather than missing data.",
+    "medium": "One signal unavailable \u2014 score estimated from remaining data.",
+    "low": "Multiple signals missing \u2014 this is an estimate. Check that Apple Watch was worn during sleep.",
+    "missing_hrv": "HRV not recorded \u2014 autonomic recovery estimated from resting HR and overnight HR dip.",
+    "missing_staging": "Sleep staging unavailable \u2014 architecture estimated from duration and disturbance data.",
+    "missing_temperature": "Wrist temperature not available on this device \u2014 thermal component excluded from sleep score.",
+    "missing_age": "Date of birth not found in Apple Health \u2014 training zones estimated using age 30. Add your date of birth in the Health app for accurate load scoring.",
+    "watch_offline": "Watch was not worn for part of the night. Score reflects available data only."
+  },
+  "decomposition": {
+    "show_point_contribution": true,
+    "show_delta_from_baseline": true,
+    "show_confidence_level": true,
+    "show_missing_signals": true,
+    "maximum_contributors_shown": 5,
+    "sort_by": "absolute_impact"
+  }
+}

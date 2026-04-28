@@ -5,6 +5,7 @@
 // Keeping these separate means the ViewModel never needs to know which depth the user is on.
 
 import SwiftUI
+import Combine
 
 enum HelixDepth: Int, Equatable {
     case index   = 1

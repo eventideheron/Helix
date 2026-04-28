@@ -19,6 +19,10 @@ class HelixBaselineEngine {
 
     private let policy: HelixCorePolicy
 
+    /// Bump when the historical definition of `.sleepConsistency` changes — stale snapshots are dropped.
+    /// `v3`: consistency history uses only nights passing staged-sleep + span gates (see `fetchSleepHistory`).
+    static let sleepConsistencyMetricSignature = "v4_merged_intervals_plausibility_gate"
+
     // Maximum gap (days) before we abandon iterative update and do a full rescan.
     private let iterativeGapDayThreshold = 7
 
@@ -59,7 +63,11 @@ class HelixBaselineEngine {
             (.remSleepPercent,      history.remSleepReadings),
             (.overnightRespiratory, history.rrReadings),
             (.wristTemperature,     history.tempReadings),
-            (.overnightHRDip,       history.dipReadings)
+            (.overnightHRDip,       history.dipReadings),
+            (.sleepConsistency,     history.consistencyReadings),
+            (.awakeningsPerHour,    history.awakeningsPerHourReadings),
+            (.acuteChronicRatio,    history.acwrReadings),
+            (.trainingVolume,      history.energyReadings)
         ]
     }
 
@@ -72,8 +80,15 @@ class HelixBaselineEngine {
 
         var baselines = [SignalIdentifier: PersonalBaseline]()
         let rates = policy.baseline.decayRates
+        let cache = sanitizedBaselineSnapshots(cachedSnapshots)
 
         for (signal, readings) in signalMap(from: history) {
+            #if DEBUG
+            if signal == .sleepDuration || signal == .deepSleepPercent || signal == .remSleepPercent {
+                let first = readings.first.map { " first=(\($0.value), \($0.date))" } ?? ""
+                print("[Helix] buildBaselines \(signal.rawValue): readings.count=\(readings.count)\(first)")
+            }
+            #endif
             // rawValue matches the JSON key — enforced by SignalIdentifier definition.
             let decayRate = rates[signal.rawValue] ?? defaultDecayRate
 
@@ -81,8 +96,21 @@ class HelixBaselineEngine {
                 signal: signal,
                 readings: readings,
                 decayRate: decayRate,
-                cachedSnapshots: cachedSnapshots
+                cachedSnapshots: cache
             )
+            #if DEBUG
+            let zeroSuspects: Set<SignalIdentifier> = [.sleepConsistency, .awakeningsPerHour, .wristTemperature, .overnightHRDip]
+            if zeroSuspects.contains(signal) {
+                let first = readings.first.map { "\($0.value) @ \($0.date)" } ?? "<none>"
+                print("[HELIX DEBUG] boundary-3 buildBaselines \(signal.rawValue): readings=\(readings.count), ewma=\(ewmaValue), first=\(first)")
+                if readings.isEmpty {
+                    print("[HELIX DEBUG][WARN] boundary-3 \(signal.rawValue): readings empty before EWMA")
+                } else if ewmaValue == 0 {
+                    let cached = cache[signal]?.ewmaValue
+                    print("[HELIX DEBUG][WARN] boundary-3 \(signal.rawValue): EWMA == 0 with non-empty readings (cached=\(String(describing: cached)))")
+                }
+            }
+            #endif
 
             baselines[signal] = PersonalBaseline(
                 signalName: signal.rawValue,
@@ -98,6 +126,19 @@ class HelixBaselineEngine {
         return baselines
     }
 
+    private func sanitizedBaselineSnapshots(
+        _ cached: [SignalIdentifier: HelixBaselineSnapshot]
+    ) -> [SignalIdentifier: HelixBaselineSnapshot] {
+        var out = cached
+        if let snap = out[.sleepConsistency], snap.metricSignatureRaw != Self.sleepConsistencyMetricSignature {
+            out.removeValue(forKey: .sleepConsistency)
+            #if DEBUG
+            print("[HELIX DEBUG] invalidated .sleepConsistency snapshot (metricSignature=\(snap.metricSignatureRaw ?? "nil"); expected=\(Self.sleepConsistencyMetricSignature))")
+            #endif
+        }
+        return out
+    }
+
     // MARK: — EWMA resolution (three paths)
     private func resolveEWMA(
         signal: SignalIdentifier,
@@ -105,6 +146,13 @@ class HelixBaselineEngine {
         decayRate: Double,
         cachedSnapshots: [SignalIdentifier: HelixBaselineSnapshot]
     ) -> Double {
+
+        // Stale SwiftData cache: ewma stuck at 0 while HealthKit history exists — fast path never recovers.
+        // Full rescan when we have readings; if readings are empty, keep existing behavior below.
+        if let cached = cachedSnapshots[signal], cached.ewmaValue == 0.0 || (signal == .sleepDuration && cached.ewmaValue < 4.0), !readings.isEmpty {
+
+            return calculateBaseline(readings: readings, decayRate: decayRate)
+        }
 
         guard let cached = cachedSnapshots[signal] else {
             // No cache — first launch slow path
@@ -201,7 +249,8 @@ class HelixBaselineEngine {
                 ewmaValue: baseline.value,
                 decayRate: baseline.decayRate,
                 dataPointCount: baseline.dataPointCount,
-                stabilityStatus: baseline.stabilityStatus
+                stabilityStatus: baseline.stabilityStatus,
+                metricSignature: signal == .sleepConsistency ? Self.sleepConsistencyMetricSignature : nil
             )
         }
     }
@@ -212,3 +261,4 @@ class HelixBaselineEngine {
         return range.contains(value)
     }
 }
+

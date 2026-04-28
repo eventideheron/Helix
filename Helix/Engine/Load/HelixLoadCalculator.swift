@@ -6,7 +6,7 @@
 //   acwr              0.40 — acute:chronic workload ratio
 //   acute_load        0.35 — absolute recent training stress
 //   activity_completion 0.15 — consistency of intended training
-//   hr_elevation_penalty 0.10 — resting HR elevated above baseline (load marker)
+//   hr_elevation_penalty 0.10 — workout HR vs personal resting HR baseline (EWMA), capped penalty
 //
 // TSS calculation uses Tanaka max HR formula via LoadCalculationContext.
 // If age is estimated (DOB unavailable), strand confidence is capped at .medium.
@@ -15,12 +15,29 @@ import Foundation
 
 class HelixLoadCalculator {
 
-    private let policy:          LoadConfig
-    private let confidenceEngine: HelixConfidenceEngine
+    let policy:             LoadConfig
+    let confidenceEngine:   HelixConfidenceEngine
+    let explanationEngine:  HelixExplanationEngine
+    let hrElevationBands:   HrElevationThresholds
 
-    init(policy: LoadConfig, confidenceEngine: HelixConfidenceEngine) {
-        self.policy           = policy
-        self.confidenceEngine = confidenceEngine
+    init(
+        policy: LoadConfig,
+        confidenceEngine: HelixConfidenceEngine,
+        explanationEngine: HelixExplanationEngine,
+        hrElevationBands: HrElevationThresholds
+    ) {
+        self.policy            = policy
+        self.confidenceEngine  = confidenceEngine
+        self.explanationEngine = explanationEngine
+        self.hrElevationBands = hrElevationBands
+    }
+
+    /// Template key for contribution copy (`hr_elevation.*`), aligned with `HelixExplanationEngine` bands.
+    func hrElevationContributionKey(score: Double) -> String {
+        let t = hrElevationBands
+        if score < t.moderateStrainThreshold { return "hr_elevation.high_strain" }
+        if score < t.highStrainThreshold { return "hr_elevation.moderate_strain" }
+        return "hr_elevation.low_strain"
     }
 
     // MARK: — Primary API
@@ -53,13 +70,14 @@ class HelixLoadCalculator {
         let chronicLoad = ewmaLoad(dailyTSS: dailyTSS, windowDays: ac.chronicWindowDays, decay: ac.chronicDecay)
         let acwr        = chronicLoad > 0 ? acuteLoad / chronicLoad : 1.0
 
+        let acwrBaseline = baselines[.acuteChronicRatio]?.value ?? 1.0
         let acwrScore = acwrScore(acwr: acwr)
         scores[.acuteChronicRatio]          = acwrScore
         originalWeights[.acuteChronicRatio] = w.acwr
         signals.append(HelixSignal(
             identifier: .acuteChronicRatio, rawValue: acwr,
-            unit: "ratio", timestamp: Date(), baseline: 1.0,
-            deltaFromBaseline: acwr - 1.0, normalizedScore: acwrScore,
+            unit: "ratio", timestamp: Date(), baseline: acwrBaseline,
+            deltaFromBaseline: acwr - acwrBaseline, normalizedScore: acwrScore,
             isValid: true, isAnomaly: acwr > policy.acwrScoring.cautionCeiling
         ))
 
@@ -81,25 +99,73 @@ class HelixLoadCalculator {
         // MARK: 4 — Activity Completion (workout frequency vs baseline)
         // Uses recent workout count vs 28-day average as a proxy
         let recentWorkoutDays  = Set(raw.workouts.map { Calendar.current.startOfDay(for: $0.startDate) }).count
-        let expectedPerWeek    = 28.0 > 0 ? Double(raw.workouts.count) / 4.0 : 3.0 // approx
+        let expectedPerWeek   = Double(raw.workouts.count) / 4.0  // approx 28-day average per week
         let completionRatio    = expectedPerWeek > 0 ? min(1.2, Double(recentWorkoutDays) / (expectedPerWeek * 7.0 / 7.0)) : 1.0
         let completionScore    = (completionRatio * 80.0).clampedToHelixScore()
         scores[.activityCompletion]          = completionScore
         originalWeights[.activityCompletion] = w.activityCompletion
 
-        // MARK: 5 — HR Elevation Penalty (load signal from resting HR)
-        // Elevated resting HR signals accumulated training load not yet dissipated
-        if let rhr = baselines[.restingHR]?.value,
-           let acuteRHR = signals.first(where: { $0.identifier == .restingHR })?.rawValue ?? nil {
-            let penalty = min(
-                policy.hrElevation.maximumPenalty,
-                max(0, acuteRHR - rhr) * policy.hrElevation.costPerBpmAboveBaseline
-            )
-            let score = (100.0 - penalty).clampedToHelixScore()
-            scores[.hrElevation]          = score
-            originalWeights[.hrElevation] = w.hrElevationPenalty
+        // MARK: 5 — HR elevation (temporal window: today → last 7 days → neutral; see `selectHrElevationWorkoutHRSamples`)
+        let hrCfg = policy.hrElevation
+        let hrNow = Date()
+        let (workoutHRSamples, hrElevationSource) = selectHrElevationWorkoutHRSamples(
+            workouts: raw.workouts,
+            hrSamples: raw.heartRateSamples,
+            now: hrNow,
+            calendar: .current
+        )
+
+        if let rhrBaseline = baselines[.restingHR]?.value {
+            if hrElevationSource == .noneRecent {
+                scores[.hrElevation] = 100.0
+                originalWeights[.hrElevation] = w.hrElevationPenalty
+                signals.append(HelixSignal(
+                    identifier: .hrElevation,
+                    rawValue: rhrBaseline,
+                    unit: "bpm",
+                    timestamp: hrNow,
+                    baseline: rhrBaseline,
+                    deltaFromBaseline: 0,
+                    normalizedScore: 100.0,
+                    isValid: true,
+                    isAnomaly: false
+                ))
+                #if DEBUG
+                print(String(format: "[HELIX DEBUG] hrElevation source=%@ samples=0 avgHR=n/a baseline=%.1f delta=0.0 rawPenalty=0.0 penalty=0.0 score=100.0 (neutral_no_recent_workout_hr)",
+                               hrElevationSource.rawValue, rhrBaseline))
+                #endif
+            } else {
+                let sumHR = workoutHRSamples.reduce(0.0) { $0 + $1.value }
+                let avgWorkoutHR = sumHR / Double(workoutHRSamples.count)
+                let delta = max(0, avgWorkoutHR - rhrBaseline)
+                let rawPenalty = delta * hrCfg.costPerBpmAboveBaseline
+                let penalty = min(rawPenalty, hrCfg.maximumPenalty)
+                let elevationScore = (100.0 - penalty).clampedToHelixScore()
+                let ts = workoutHRSamples.map(\.endDate).max() ?? hrNow
+                scores[.hrElevation] = elevationScore
+                originalWeights[.hrElevation] = w.hrElevationPenalty
+                signals.append(HelixSignal(
+                    identifier: .hrElevation,
+                    rawValue: avgWorkoutHR,
+                    unit: "bpm",
+                    timestamp: ts,
+                    baseline: rhrBaseline,
+                    deltaFromBaseline: avgWorkoutHR - rhrBaseline,
+                    normalizedScore: elevationScore,
+                    isValid: true,
+                    isAnomaly: false
+                ))
+                #if DEBUG
+                print(String(format: "[HELIX DEBUG] hrElevation source=%@ samples=%d avgHR=%.1f baseline=%.1f delta=%.1f rawPenalty=%.1f penalty=%.1f score=%.1f",
+                             hrElevationSource.rawValue, workoutHRSamples.count,
+                             avgWorkoutHR, rhrBaseline, delta, rawPenalty, penalty, elevationScore))
+                #endif
+            }
         } else {
             missing.append(.hrElevation)
+            #if DEBUG
+            print("[HELIX DEBUG] hrElevation missing — no restingHR baseline")
+            #endif
         }
 
         // MARK: Weight redistribution and composite
@@ -114,11 +180,11 @@ class HelixLoadCalculator {
 
         // MARK: Contribution breakdown
         for (signal, score) in scores {
-            let weight = adjusted[signal] ?? 0
+            let weight: Double = adjusted[signal] ?? 0
             contributions.append(SignalContribution(
                 signal: signal,
                 pointContribution: score * weight,
-                explanation: loadExplanationKey(for: signal, acwr: acwr, score: score),
+                explanation: loadContributionExplanationKey(for: signal, acwr: acwr, score: score),
                 deltaDescription: ""
             ))
         }
@@ -134,10 +200,15 @@ class HelixLoadCalculator {
             ? Swift.min(confidenceResult.level, .medium)
             : confidenceResult.level
 
-        var explanation = ageContext.ageIsEstimated
-            ? "Training zones estimated — add date of birth in Apple Health for accuracy. "
-            : ""
-        explanation += primaryLoadExplanation(acwr: acwr, score: composite)
+        let loadKey = primaryLoadExplanationKey(acwr: acwr)
+        let loadNarrative = explanationEngine.explanation(fromKey: loadKey)
+        let explanation: String
+        if ageContext.ageIsEstimated {
+            let ageNote = explanationEngine.explanation(fromKey: "missing_age")
+            explanation = ageNote + " " + loadNarrative
+        } else {
+            explanation = loadNarrative
+        }
 
         let strand = StrandScore(
             strand:               .load,
@@ -153,165 +224,29 @@ class HelixLoadCalculator {
         return (composite, strand)
     }
 
-    // MARK: — TSS calculation
+    // MARK: — Contribution copy (template keys only)
 
-    // TSS = Σ(minutes_in_zone × zone_stress_multiplier) + NEAT contribution
-    private func computeDailyTSS(
-        workouts:   [HKWorkoutProxy],
-        hrSamples:  [HKSampleProxy],
-        ageContext: LoadCalculationContext,
-        energyKcal: Double
-    ) -> [(tss: Double, date: Date)] {
-
-        let maxHR       = ageContext.maxHeartRate
-        let multipliers = policy.heartRateZones.zoneStressMultipliers
-        let zones       = zoneThresholds(maxHR: maxHR)
-        let calendar    = Calendar.current
-
-        // Group HR samples by workout
-        var byWorkout = [Date: [(Double, Date)]]()
-        for workout in workouts {
-            let wSamples = hrSamples.filter {
-                $0.startDate >= workout.startDate && $0.startDate <= workout.endDate
-            }
-            let key = calendar.startOfDay(for: workout.startDate)
-            byWorkout[key, default: []].append(contentsOf: wSamples.map { ($0.value, $0.startDate) })
-        }
-
-        // Compute TSS per day
-        var tssHistory: [(tss: Double, date: Date)] = []
-
-        for (day, daySamples) in byWorkout {
-            var tss = 0.0
-            for i in 0..<daySamples.count {
-                let hr        = daySamples[i].0
-                let zone      = heartRateZone(hr: hr, zones: zones)
-                let multiplier = multipliers["zone_\(zone)"] ?? 1.0
-                // Minutes between this sample and next (or 1 min for last sample)
-                let minutes: Double
-                if i < daySamples.count - 1 {
-                    minutes = daySamples[i + 1].1.timeIntervalSince(daySamples[i].1) / 60.0
-                } else {
-                    minutes = 1.0
-                }
-                tss += max(0, min(minutes, 5.0)) * multiplier  // Cap interval at 5 min to handle gaps
-            }
-            tssHistory.append((tss: tss, date: day))
-        }
-
-        // NEAT contribution for days without workouts
-        let workoutDays = Set(tssHistory.map { $0.date })
-        let neatTSS = energyKcal * policy.heartRateZones.neatEnergyMultiplier
-        let today = calendar.startOfDay(for: Date())
-        if !workoutDays.contains(today) && neatTSS > 0 {
-            tssHistory.append((tss: neatTSS, date: today))
-        }
-
-        return tssHistory.sorted { $0.date < $1.date }
-    }
-
-    private func zoneThresholds(maxHR: Double) -> [(low: Double, high: Double)] {
-        let boundaries = policy.heartRateZones
-        return [
-            (0.50 * maxHR, 0.60 * maxHR),
-            (0.60 * maxHR, 0.70 * maxHR),
-            (0.70 * maxHR, 0.80 * maxHR),
-            (0.80 * maxHR, 0.90 * maxHR),
-            (0.90 * maxHR, maxHR)
-        ]
-        _ = boundaries  // suppress unused warning
-    }
-
-    private func heartRateZone(hr: Double, zones: [(low: Double, high: Double)]) -> Int {
-        for (i, zone) in zones.enumerated() {
-            if hr >= zone.low && hr < zone.high { return i + 1 }
-        }
-        return hr < zones[0].low ? 1 : 5
-    }
-
-    // MARK: — EWMA load
-
-    private func ewmaLoad(dailyTSS: [(tss: Double, date: Date)], windowDays: Int, decay: Double) -> Double {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -windowDays, to: Date())!
-        let relevant = dailyTSS.filter { $0.date >= cutoff }
-        guard !relevant.isEmpty else { return 0 }
-
-        let today = Date()
-        var weightedSum = 0.0, weightTotal = 0.0
-        for entry in relevant {
-            let daysAgo = Calendar.current.dateComponents([.day], from: entry.date, to: today).day ?? 0
-            let weight  = pow(decay, Double(daysAgo))
-            weightedSum += entry.tss * weight
-            weightTotal += weight
-        }
-        return weightTotal > 0 ? weightedSum / weightTotal : 0
-    }
-
-    // MARK: — ACWR scoring
-
-    private func acwrScore(acwr: Double) -> Double {
-        let bands = policy.acwrScoring
-        switch acwr {
-        case ..<bands.undertrainingCeiling:
-            // Undertraining — score linearly from 40 to 60 as acwr approaches optimal_low
-            let progress = acwr / bands.undertrainingCeiling
-            return (40.0 + progress * 20.0).clampedToHelixScore()
-        case bands.undertrainingCeiling..<bands.optimalLow:
-            // Transitional — 60 to 80
-            let range    = bands.optimalLow - bands.undertrainingCeiling
-            let progress = (acwr - bands.undertrainingCeiling) / range
-            return (60.0 + progress * 20.0).clampedToHelixScore()
-        case bands.optimalLow...bands.optimalHigh:
-            // Optimal — 80 to 100
-            return 90.0
-        case bands.optimalHigh..<bands.cautionCeiling:
-            // Caution — 50 to 80 (declining as load rises)
-            let range    = bands.cautionCeiling - bands.optimalHigh
-            let excess   = acwr - bands.optimalHigh
-            return (80.0 - (excess / range) * 30.0).clampedToHelixScore()
+    private func loadContributionExplanationKey(
+        for signal: SignalIdentifier,
+        acwr: Double,
+        score: Double
+    ) -> String {
+        switch signal {
+        case .acuteChronicRatio:
+            return loadExplanationKey(for: signal, acwr: acwr, score: score)
+        case .hrElevation:
+            return hrElevationContributionKey(score: score)
+        case .trainingVolume:
+            if score < 40 { return "training_volume.low" }
+            if score < 60 { return "training_volume.moderate" }
+            if score < 80 { return "training_volume.optimal" }
+            return "training_volume.high"
+        case .activityCompletion:
+            if score < 50 { return "activity_completion.low" }
+            if score < 75 { return "activity_completion.optimal" }
+            return "activity_completion.high"
         default:
-            // Excessive — below 50, declining further
-            let excess = acwr - bands.cautionCeiling
-            return (50.0 - excess * 20.0).clampedToHelixScore()
+            return loadExplanationKey(for: signal, acwr: acwr, score: score)
         }
-    }
-
-    private func acuteLoadScore(acuteLoad: Double, baseline: Double) -> Double {
-        guard baseline > 0 else { return 50.0 }
-        let ratio = acuteLoad / baseline
-        // Near baseline = 80, progressive decay outward
-        return (80.0 - abs(ratio - 1.0) * 40.0).clampedToHelixScore()
-    }
-
-    // MARK: — Explanation helpers
-
-    private func loadExplanationKey(for signal: SignalIdentifier, acwr: Double, score: Double) -> String {
-        if signal == .acuteChronicRatio {
-            if acwr > policy.acwrScoring.cautionCeiling { return "acwr.very_high" }
-            if acwr > policy.acwrScoring.optimalHigh    { return "acwr.high" }
-            if acwr < policy.acwrScoring.undertrainingCeiling { return "acwr.low" }
-            return "acwr.optimal"
-        }
-        return signal.explanationKey
-    }
-
-    private func primaryLoadExplanation(acwr: Double, score: Double) -> String {
-        if acwr > policy.acwrScoring.cautionCeiling {
-            return "Training load significantly exceeds your recent capacity."
-        }
-        if acwr > policy.acwrScoring.optimalHigh {
-            return "Training load is above your recent average — a productive stimulus."
-        }
-        if acwr < policy.acwrScoring.undertrainingCeiling {
-            return "Training volume is below your recent baseline."
-        }
-        return "Training load is well-balanced."
-    }
-}
-
-// MARK: — Optional<Double> convenience for HR elevation calculation
-private extension Optional where Wrapped == Double {
-    static func ?? (lhs: Double?, rhs: Double?) -> Double? {
-        lhs ?? rhs
     }
 }

@@ -79,7 +79,7 @@ struct PermissionsView: View {
                     } label: {
                         Text("Connect Apple Health")
                             .font(.body.weight(.medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(HelixTheme.backgroundPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(HelixTheme.pursueColor)
@@ -147,7 +147,7 @@ struct BaselineLearningView: View {
                 // Progress ring
                 ZStack {
                     Circle()
-                        .stroke(Color.white.opacity(0.08), lineWidth: 3)
+                        .stroke(HelixTheme.borderSubtle, lineWidth: 3)
                         .frame(width: 120, height: 120)
                     Circle()
                         .trim(from: 0, to: progress)

@@ -36,6 +36,14 @@ class HelixIndexCalculator {
         let adjustedRecovery = (recovery.score + sleepBoost - loadCost)
             .clampedToHelixScore()
 
+        #if DEBUG
+        let _netEffect = sleepBoost - loadCost
+        let _preComposite = w.sleep * sleep.score + w.recovery * adjustedRecovery + w.load * load.score
+        let _pct = _preComposite > 0 ? abs(_netEffect / _preComposite) * 100.0 : 0.0
+        print(String(format: "[HELIX DEBUG] interaction_terms: sleepBoost=%.3f loadCost=%.3f net=%.3f effect=%.1f%% of composite",
+              sleepBoost, loadCost, _netEffect, _pct))
+        #endif
+
         // Step 2 — Weighted composite
         var composite =
               w.sleep    * sleep.score

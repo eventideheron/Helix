@@ -12,6 +12,10 @@ struct HistoryResult {
     let triggerType:           String?
     let trendArrow:            TrendDirection?
     let milestoneMessage:      String?
+    /// Apple Health HRV depth from the latest pipeline run (`dataPointCountAtCalculation`); not SwiftData row count.
+    let appleHealthDays:       Int
+    /// From `seasonal_outputs.message_modes` when classification is provisional or confirmed.
+    let seasonalContextLine:   String?
     let seasonalWarning:       String?
 }
 
@@ -28,35 +32,39 @@ class HelixHistoryEngine {
     // MARK: — Primary API
 
     func evaluate(
-        today:       HelixIndex,
-        allRecords:  [HelixDailyRecord]
+        today:            HelixIndex,
+        allRecords:       [HelixDailyRecord],
+        appleHealthDays:  Int
     ) -> HistoryResult {
 
         let activation = policy.activationRequirements
+        let recordCount = allRecords.count
 
-        guard allRecords.count >= activation.minimumDaysForBasicHistory else {
+        guard recordCount >= activation.minimumDaysForBasicHistory else {
             return HistoryResult(
                 todayInHistoryMessage: nil,
                 triggerType: nil,
                 trendArrow: trendArrow(records: allRecords, strand: .sleep), // available from day 1
-                milestoneMessage: milestoneMessage(dayCount: allRecords.count),
+                milestoneMessage: milestoneMessage(recordCount: recordCount, appleHealthDays: appleHealthDays),
+                appleHealthDays: appleHealthDays,
+                seasonalContextLine: nil,
                 seasonalWarning: nil
             )
         }
 
         let todayInHistory  = evaluateTodayInHistory(today: today, records: allRecords)
         let trend           = trendArrow(records: allRecords, strand: nil)
-        let milestone       = milestoneMessage(dayCount: allRecords.count)
-        let seasonal        = allRecords.count >= activation.minimumDaysForSeasonalDetection
-            ? evaluateSeasonalWarning(records: allRecords)
-            : nil
+        let milestone       = milestoneMessage(recordCount: recordCount, appleHealthDays: appleHealthDays)
+        let seasonal = evaluateSeasonalOutput(records: allRecords)
 
         return HistoryResult(
             todayInHistoryMessage: todayInHistory?.message,
             triggerType:           todayInHistory?.type,
             trendArrow:            trend,
             milestoneMessage:      milestone,
-            seasonalWarning:       seasonal
+            appleHealthDays:       appleHealthDays,
+            seasonalContextLine:   seasonal?.context,
+            seasonalWarning:       seasonal?.warning
         )
     }
 
@@ -189,67 +197,67 @@ class HelixHistoryEngine {
 
     // MARK: — Milestones
 
-    private func milestoneMessage(dayCount: Int) -> String? {
+    private func milestoneMessage(recordCount: Int, appleHealthDays: Int) -> String? {
         let stages = policy.milestones.baselineMaturityStages
         let milestoneDays = [30, 60, 90, 180, 365]
 
-        if milestoneDays.contains(dayCount) {
-            let confidence = dayCount >= 90 ? "well-calibrated" : "developing"
-            return "\(dayCount) days of Helix data. Your baseline is now \(confidence)."
+        // Milestone markers use record count (genuine Helix history milestones)
+        if milestoneDays.contains(recordCount) {
+            let confidence = recordCount >= 90 ? "well-calibrated" : "developing"
+            return "\(recordCount) days of Helix data. Your baseline is now \(confidence)."
         }
 
-        // Maturity stage messages
-        switch dayCount {
+        // Maturity messaging uses Apple Health depth, not Helix row count
+        switch appleHealthDays {
         case 0..<14:
-            let remaining = 14 - dayCount
             return stages.learning.message
-                .replacingOccurrences(of: "{days_remaining}", with: "\(remaining)")
+                .replacingOccurrences(of: "{days_remaining}", with: "\(recordCount)")
         case 14..<90:
             return stages.developing.message
-        case 90..<365:
-            return nil  // No persistent message at established — Today In History takes over
         default:
             return nil
         }
     }
 
-    // MARK: — Seasonal detection
+    // MARK: — Seasonal detection (prior-year anchor; interpretation only — no score mutation)
 
-    private func evaluateSeasonalWarning(records: [HelixDailyRecord]) -> String? {
+    private func evaluateSeasonalOutput(records: [HelixDailyRecord]) -> (context: String?, warning: String?)? {
+        let activation = policy.activationRequirements
+        let uniqueDays = Set(records.map { Calendar.current.startOfDay(for: $0.date) }).count
+        guard uniqueDays >= activation.minimumDaysForSeasonalDetection else { return nil }
         guard policy.seasonalDetection.enabled else { return nil }
 
-        let windowDays = policy.seasonalDetection.comparisonWindowDaysEachSide
-        let today      = Calendar.current.dateComponents([.month, .day], from: Date())
+        let outputs = policy.seasonalOutputs
+        guard outputs.allowWarningMessages else { return nil }
 
-        // Find all records within ±windowDays of today's calendar date in prior years
-        let historicWindow = records.filter { record in
-            let recComps = Calendar.current.dateComponents([.month, .day, .year], from: record.date)
-            guard let recYear = recComps.year, let curYear = Calendar.current.component(.year, from: Date()) as Int?,
-                  recYear < curYear else { return false }
+        let result = SeasonalLookbackBuilder.build(policy: policy, records: records)
+        guard result.sleepDeclineDetected || result.recoverySuppressionDetected else { return nil }
 
-            // Day-of-year proximity
-            let recDOY = Calendar.current.ordinality(of: .day, in: .year, for: record.date) ?? 0
-            let todDOY = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
-            return abs(recDOY - todDOY) <= windowDays
+        var context: String?
+        if outputs.allowExplanatoryContext {
+            switch result.classification {
+            case .confirmed:
+                context = outputs.messageModes.confirmed
+            case .provisional:
+                context = outputs.messageModes.provisional
+            case .none:
+                context = nil
+            }
         }
 
-        guard historicWindow.count >= 10 else { return nil }
-
-        // Sleep decline pattern
-        let avgHistoricSleep = historicWindow.map(\.sleepScore).reduce(0, +) / Double(historicWindow.count)
-        let recentSleep      = records.suffix(14).map(\.sleepScore).reduce(0, +) / 14.0
-        if avgHistoricSleep - recentSleep > 8 {
-            return "Your sleep scores have historically declined around this time of year. Two years of data confirms this pattern."
+        var lines: [String] = []
+        if result.sleepDeclineDetected {
+            lines.append(
+                "Your sleep scores are lower now than in this seasonal window from the prior year."
+            )
         }
-
-        // Recovery suppression pattern
-        let avgHistoricRecovery = historicWindow.map(\.recoveryScore).reduce(0, +) / Double(historicWindow.count)
-        let recentRecovery      = records.suffix(14).map(\.recoveryScore).reduce(0, +) / 14.0
-        if avgHistoricRecovery - recentRecovery > 10 {
-            return "Recovery tends to dip for you in this period each year. Consider proactive rest."
+        if result.recoverySuppressionDetected {
+            lines.append(
+                "Recovery tends to be lower for you in this period versus the same window last year."
+            )
         }
-
-        return nil
+        guard !lines.isEmpty else { return nil }
+        return (context, lines.joined(separator: "\n"))
     }
 
     // MARK: — Percentile utility

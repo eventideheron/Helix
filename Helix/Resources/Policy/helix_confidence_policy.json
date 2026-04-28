@@ -1,0 +1,127 @@
+{
+  "policy_version": "1.1",
+  "created": "2026-03-10",
+  "updated": "2026-03-11",
+  "status": "active",
+  "description": "Signal integrity rules, confidence thresholds, missing data handling, graceful degradation, and baseline stability detection.",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-03-10",
+      "notes": "Initial release."
+    },
+    {
+      "version": "1.1",
+      "date": "2026-03-11",
+      "notes": "Fixed PDF extraction artifacts: removed spaces from key names, corrected stability_states array, fixed unclosed strings. Added watch_offline numeric fields as doubles. Aligned all keys with Swift Decodable struct names."
+    }
+  ],
+  "signal_requirements": {
+    "hrv": {
+      "minimum_readings": 1,
+      "maximum_age_hours": 2,
+      "preferred_window": "within_2hrs_of_waking"
+    },
+    "sleep_duration": {
+      "minimum_hours_recorded": 3.0,
+      "requires_continuous_monitoring": false
+    },
+    "deep_sleep": {
+      "minimum_hours_for_staging": 4.0,
+      "fallback_if_unavailable": "exclude_and_redistribute"
+    },
+    "rem_sleep": {
+      "minimum_hours_for_staging": 4.0,
+      "fallback_if_unavailable": "exclude_and_redistribute"
+    },
+    "resting_hr": {
+      "minimum_readings": 1,
+      "measurement_window": "morning_resting_state"
+    },
+    "respiratory_rate": {
+      "minimum_readings_overnight": 10,
+      "maximum_age_hours": 8
+    },
+    "wrist_temperature": {
+      "requires_apple_watch_series_minimum": 8,
+      "fallback_if_unavailable": "exclude_and_redistribute"
+    },
+    "overnight_hr_dip": {
+      "minimum_hr_samples": 60,
+      "fallback_if_unavailable": "exclude_and_redistribute"
+    },
+    "spo2": {
+      "minimum_readings": 1,
+      "use_rolling_average_nights": 7,
+      "fallback_if_unavailable": "modifier_set_to_nominal"
+    }
+  },
+  "confidence_levels": {
+    "high": {
+      "minimum_signals_present_percent": 0.80,
+      "primary_signals_required": [
+        "hrv",
+        "resting_hr",
+        "sleep_duration",
+        "deep_sleep_percent",
+        "overnight_hr_dip"
+      ]
+    },
+    "medium": {
+      "minimum_signals_present": 3,
+      "score_displayed_with_caveat": true
+    },
+    "low": {
+      "minimum_signals_present": 1,
+      "score_displayed_as_estimate": true,
+      "watch_offline_threshold_hours": 4
+    }
+  },
+  "watch_offline": {
+    "score_supressed_if_offline_hours": 6.0,
+    "partial_score_if_offline_hours": 4.0,
+    "message_trigger": "watch_not_worn_during_sleep"
+  },
+  "graceful_degradation": {
+    "method": "proportional_redistribution",
+    "note": "Missing signal weight redistributed proportionally to remaining signals based on their share of remaining total weight.",
+    "minimum_signals_to_calculate": 2,
+    "below_minimum_behavior": "suppress_strand_score",
+    "confidence_flag_on_any_missing": true
+  },
+  "baseline_stability": {
+    "enabled": true,
+    "detection_method": "rolling_window_comparison",
+    "short_window_days": 14,
+    "long_window_days": 60,
+    "shift_detection_thresholds": {
+      "hrv_percent_change": 0.15,
+      "resting_hr_bpm_change": 4.0,
+      "sleep_duration_hours_change": 0.75
+    },
+    "confirmation_required_days": 7,
+    "note": "Signal must persist 7 days before recalibration triggers. Prevents illness or travel from resetting baseline permanently.",
+    "recalibration_behavior": {
+      "method": "gradual_blend",
+      "blend_window_days": 14
+    },
+    "stability_states": [
+      "stable",
+      "transient",
+      "recalibrating"
+    ],
+    "notify_user_on_recalibration": true
+  },
+  "data_quality": {
+    "anomaly_detection": {
+      "hrv_spike_threshold_percent": 0.50,
+      "rhr_spike_threshold_bpm": 15.0,
+      "temp_spike_threshold_celsius": 1.5
+    },
+    "anomaly_behavior": {
+      "exclude_from_calculation": true,
+      "flag_in_explanation": true,
+      "retain_in_history": true
+    }
+  }
+}

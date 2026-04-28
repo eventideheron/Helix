@@ -1,0 +1,129 @@
+{
+  "policy_version": "1.1",
+  "description": "Cross-strand insight engine — refined V1.1 with improved pattern separation, stronger language, and action bridge guidance.",
+  "language_style": "probabilistic",
+  "v1_proxy_only": true,
+
+  "suppression": {
+    "suppress_if_confidence": "low",
+    "suppress_if_baseline_days_lt": 7
+  },
+
+  "pattern_priority": [
+    "suppressed_recovery",
+    "load_dominant_strain",
+    "contradiction",
+    "alignment"
+  ],
+
+  "priority_resolution": "first_match_only",
+
+  "patterns": {
+
+    "suppressed_recovery": {
+      "id": "suppressed_recovery",
+      "description": "Load is clearly driving suppressed recovery despite adequate sleep.",
+      "conditions": {
+        "sleep_gte": 65,
+        "load_gte": 65,
+        "recovery_lte": 48
+      },
+      "language": {
+        "depth_2": {
+          "headline": "Recovery is lagging behind load.",
+          "body": "Training load appears elevated and sleep has been present, but recovery has not followed. This pattern often reflects accumulated fatigue building faster than it is being absorbed. Today is best approached with moderation until recovery begins to rebound."
+        },
+        "depth_3": {
+          "headline": "Load-suppressed recovery",
+          "body": "When load remains high alongside adequate sleep but recovery stays suppressed, it suggests the system has not yet absorbed recent stress. This is typically resolved with a meaningful reduction in intensity rather than complete rest. A return of HRV toward baseline is a useful signal that absorption has resumed."
+        }
+      }
+    },
+
+    "load_dominant_strain": {
+      "id": "load_dominant_strain",
+      "description": "Load is high while sleep is insufficient and recovery is not keeping pace.",
+      "conditions": {
+        "load_gte": 65,
+        "sleep_lte": 55,
+        "recovery_lte": 60
+      },
+      "language": {
+        "depth_2": {
+          "headline": "Load is outpacing recovery inputs.",
+          "body": "Recent load appears elevated while sleep has not kept pace, and recovery has not fully compensated. When recovery inputs lag behind demand, strain tends to accumulate more quickly. Today is best approached with caution or reduced intensity."
+        },
+        "depth_3": {
+          "headline": "Load-dominant strain",
+          "body": "When load remains high without sufficient sleep support and recovery is only partial, the system has fewer opportunities to absorb stress. Short-term performance may persist, but sustainability declines without adjustment. Prioritizing sleep and reducing intensity can help restore balance."
+        }
+      }
+    },
+
+    "contradiction": {
+      "id": "contradiction",
+      "description": "Sleep appears strong but recovery is suppressed under moderate load.",
+      "conditions": {
+        "sleep_gte": 72,
+        "recovery_lte": 50,
+        "load_gte": 50,
+        "load_lt": 65
+      },
+      "language": {
+        "depth_2": {
+          "headline": "Strong sleep, suppressed recovery.",
+          "body": "Sleep appears solid, but recovery has not followed. When these diverge with moderate load present, accumulated stress is often a contributing factor — though other stressors can produce the same pattern. Today is best approached with moderation."
+        },
+        "depth_3": {
+          "headline": "Sleep–Recovery divergence",
+          "body": "Sleep quality and duration appear adequate, which suggests the recovery gap may not be driven by sleep itself. Moderate recent load or external stressors are likely influencing the autonomic response. This pattern often resolves with one lower-intensity day."
+        }
+      }
+    },
+
+    "alignment": {
+      "id": "alignment",
+      "description": "All three strands are coherently aligned — either elevated or suppressed.",
+      "conditions": {
+        "strong":     { "all_gte": 68 },
+        "suppressed": { "all_lte": 45 }
+      },
+      "language": {
+        "strong": {
+          "depth_2": {
+            "headline": "Your system is aligned.",
+            "body": "Sleep, load, and recovery are all elevated together. Multi-strand alignment like this is a more reliable readiness signal than any single strand alone. Today may support higher-quality work or training."
+          },
+          "depth_3": {
+            "headline": "System alignment",
+            "body": "When all three strands move together, it reflects a coherent physiological state rather than a single metric performing well. This alignment represents a meaningful readiness window."
+          }
+        },
+        "suppressed": {
+          "depth_2": {
+            "headline": "Your system is broadly suppressed.",
+            "body": "Sleep, load, and recovery are all trending low together. Multi-system suppression often reflects cumulative stress across multiple domains. Today is best approached with reduced demand and recovery focus."
+          },
+          "depth_3": {
+            "headline": "Multi-system suppression",
+            "body": "When all three strands are low together, the signal is more significant than any individual metric. Rest, nutrition, and reduced intensity are likely the most effective response."
+          }
+        }
+      }
+    }
+
+  },
+
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-04-03",
+      "note": "Initial release. Three V1 patterns: contradiction, suppressed_recovery, alignment. Multi-day consecutive detection deferred to V2."
+    },
+    {
+      "version": "1.1",
+      "date": "2026-04-04",
+      "note": "Added load_dominant_strain pattern. Clarified contradiction vs suppressed_recovery threshold boundaries (contradiction: load_gte 50, load_lt 65; suppressed_recovery: load_gte 65). Added action bridge guidance to all depth_2 language. Removed max_delta_between_strands_lte — deferred to v1.2 pending Swift decoder update."
+    }
+  ]
+}

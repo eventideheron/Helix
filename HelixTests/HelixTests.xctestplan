@@ -12,7 +12,13 @@
     "testTimeoutsEnabled" : true
   },
   "testTargets" : [
-
+    {
+      "target" : {
+        "containerPath" : "container:Helix.xcodeproj",
+        "identifier" : "C052AB0E2F61F71B006DDDDD",
+        "name" : "HelixTests"
+      }
+    }
   ],
   "version" : 1
 }

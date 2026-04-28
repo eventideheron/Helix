@@ -29,11 +29,14 @@ struct HistoryView: View {
                             .padding(.bottom, 16)
                     }
 
-                    // Seasonal warning
+                    // Seasonal warning (prior-year window; provisional vs confirmed context from policy)
                     if let seasonal = historyResult.seasonalWarning {
-                        SeasonalWarningCard(message: seasonal)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 16)
+                        SeasonalWarningCard(
+                            contextLine: historyResult.seasonalContextLine,
+                            message: seasonal
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
                     }
 
                     // Trend section
@@ -53,8 +56,8 @@ struct HistoryView: View {
                             .padding(.bottom, 32)
                     }
 
-                    // Historical helix visualisation — Tier 3
-                    HelixVisualisationPlaceholder()
+                    // Triple Helix braid chart — Tier 3
+                    TripleHelixBraidSection(records: allRecords)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 40)
                 }
@@ -69,7 +72,7 @@ struct HistoryView: View {
                 .font(HelixTypography.microLabel)
                 .tracking(HelixTracking.sectionHeader)
                 .foregroundColor(HelixTheme.textSecondary)
-            Text("\(allRecords.count) days of data")
+            Text("\(allRecords.count) day\(allRecords.count == 1 ? "" : "s") recorded")
                 .font(.system(size: 28, weight: .thin))
                 .foregroundColor(HelixTheme.textPrimary)
         }
@@ -112,7 +115,8 @@ struct TodayInHistoryCard: View {
 // MARK: — Seasonal warning card
 
 struct SeasonalWarningCard: View {
-    let message: String
+    let contextLine: String?
+    let message:     String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -124,6 +128,11 @@ struct SeasonalWarningCard: View {
                     .font(HelixTypography.microLabel)
                     .tracking(HelixTracking.sectionHeader)
                     .foregroundColor(HelixTheme.moderateColor)
+            }
+            if let contextLine {
+                Text(contextLine)
+                    .font(HelixTypography.captionBody)
+                    .foregroundColor(HelixTheme.textSecondary)
             }
             Text(message)
                 .font(HelixTypography.explanationBody)
@@ -272,28 +281,186 @@ struct MilestoneCard: View {
     }
 }
 
-// MARK: — Historical helix visualisation placeholder (Tier 3)
+// MARK: — Triple Helix braid visualisation (Tier 3)
 
-struct HelixVisualisationPlaceholder: View {
+struct TripleHelixBraidSection: View {
+    let records: [HelixDailyRecord]
+
+    private var sorted: [HelixDailyRecord] {
+        records.sorted { $0.date < $1.date }
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "waveform.path")
-                .font(.system(size: 32))
-                .foregroundColor(HelixTheme.textSecondary.opacity(0.4))
-            Text("Historical helix visualisation")
-                .font(HelixTypography.captionBody)
-                .foregroundColor(HelixTheme.textSecondary.opacity(0.5))
-            Text("Tier 3")
-                .font(.caption2)
-                .foregroundColor(HelixTheme.textSecondary.opacity(0.3))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("TRIPLE HELIX")
+                    .font(HelixTypography.microLabel)
+                    .tracking(HelixTracking.sectionHeader)
+                    .foregroundColor(HelixTheme.textSecondary)
+
+                Spacer()
+
+                if let first = sorted.first, let last = sorted.last {
+                    Text(dateRangeLabel(from: first.date, to: last.date))
+                        .font(.caption2)
+                        .foregroundColor(HelixTheme.textSecondary.opacity(0.55))
+                }
+            }
+
+            if sorted.count >= 14 {
+                TripleHelixBraidChart(records: sorted)
+                    .frame(height: 140)
+            } else {
+                Text("Accumulating data…")
+                    .font(HelixTypography.captionBody)
+                    .foregroundColor(HelixTheme.textSecondary)
+                    .frame(height: 140)
+            }
+
+            HStack(spacing: 16) {
+                StrandLegendDot(color: HelixTheme.sleepColor, label: "Sleep")
+                StrandLegendDot(color: HelixTheme.loadColor, label: "Load")
+                StrandLegendDot(color: HelixTheme.recoveryColor, label: "Recovery")
+            }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 160)
-        .background(Color.white.opacity(0.02))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
-        )
+    }
+
+    private func dateRangeLabel(from start: Date, to end: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        let startStr = formatter.string(from: start)
+        formatter.dateFormat = "MMM yyyy"
+        let endStr = formatter.string(from: end)
+        return "\(startStr) – \(endStr)"
+    }
+}
+
+struct TripleHelixBraidChart: View {
+    let records: [HelixDailyRecord]
+
+    var body: some View {
+        Canvas { context, size in
+            let count = records.count
+            guard count >= 2 else { return }
+
+            let width      = size.width
+            let height     = size.height
+            let topPad: CGFloat    = 12
+            let bottomPad: CGFloat = 12
+            let drawHeight = height - topPad - bottomPad
+            let step       = width / CGFloat(count - 1)
+
+            func yPos(_ score: Double) -> CGFloat {
+                let clamped = min(max(score, 0), 100)
+                return topPad + drawHeight * CGFloat(1.0 - clamped / 100.0)
+            }
+
+            func buildPath(points: [(index: Int, score: Double)]) -> Path {
+                var path = Path()
+                for (i, point) in points.enumerated() {
+                    let x = CGFloat(point.index) * step
+                    let y = yPos(point.score)
+                    if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
+                    else       { path.addLine(to: CGPoint(x: x, y: y)) }
+                }
+                return path
+            }
+
+            let liveRecords = records.filter { $0.appStateRaw != "historicalBackfill" }
+            let sleepPoints = liveRecords.enumerated().map { (index: $0.offset, score: $0.element.sleepScore) }
+            let recoveryPoints = liveRecords.enumerated().map { (index: $0.offset, score: $0.element.recoveryScore) }
+            let loadPoints = liveRecords.enumerated().map { (index: $0.offset, score: $0.element.loadScore) }
+
+            let sleepPath = buildPath(points: sleepPoints)
+            let recoveryPath = buildPath(points: recoveryPoints)
+            let loadPath = buildPath(points: loadPoints)
+
+            // Sleep — Indigo (back)
+            context.stroke(sleepPath,
+                with: .color(HelixTheme.sleepColor.opacity(0.25)),
+                style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+            context.stroke(sleepPath,
+                with: .color(HelixTheme.sleepColor.opacity(0.85)),
+                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+
+            // Recovery — Emerald (middle)
+            context.stroke(recoveryPath,
+                with: .color(HelixTheme.recoveryColor.opacity(0.25)),
+                style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+            context.stroke(recoveryPath,
+                with: .color(HelixTheme.recoveryColor.opacity(0.85)),
+                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+
+            // Load — Cyan (front), suppress backfilled rows
+            if loadPoints.count >= 2 {
+                context.stroke(loadPath,
+                    with: .color(HelixTheme.loadColor.opacity(0.25)),
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+                context.stroke(loadPath,
+                    with: .color(HelixTheme.loadColor.opacity(0.85)),
+                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            }
+
+            drawMonthMarkers(
+                context: &context,
+                records: records,
+                step: step,
+                height: height,
+                topPad: topPad
+            )
+        }
+    }
+
+    private func drawMonthMarkers(
+        context: inout GraphicsContext,
+        records: [HelixDailyRecord],
+        step: CGFloat,
+        height: CGFloat,
+        topPad: CGFloat
+    ) {
+        let calendar = Calendar.current
+        var lastMonth = -1
+
+        for (i, record) in records.enumerated() {
+            let month = calendar.component(.month, from: record.date)
+            if month != lastMonth && lastMonth != -1 {
+                let x = CGFloat(i) * step
+                var line = Path()
+                line.move(to: CGPoint(x: x, y: topPad))
+                line.addLine(to: CGPoint(x: x, y: height))
+                context.stroke(
+                    line,
+                    with: .color(HelixTheme.textSecondary.opacity(0.10)),
+                    lineWidth: 0.5
+                )
+
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MMM"
+                context.draw(
+                    Text(formatter.string(from: record.date))
+                        .font(.system(size: 7, design: .monospaced))
+                        .foregroundColor(HelixTheme.textSecondary.opacity(0.35)),
+                    at: CGPoint(x: x + 6, y: height - 8)
+                )
+            }
+            lastMonth = month
+        }
+    }
+}
+
+private struct StrandLegendDot: View {
+    let color: Color
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 5, height: 5)
+                .shadow(color: color.opacity(0.6), radius: 3)
+            Text(label)
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundColor(HelixTheme.textSecondary.opacity(0.7))
+        }
     }
 }

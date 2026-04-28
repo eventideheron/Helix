@@ -87,12 +87,19 @@ class HelixConfidenceEngine {
         let level: ConfidenceLevel
         let explanationKey: String
 
-        if primaryMissing.isEmpty && presentCount >= highConfig.minimumSignalsPresent {
+        let highThreshold = Int(ceil(Double(allExpectedSignals.count) * highConfig.minimumSignalsPresentPercent))
+        if primaryMissing.isEmpty && presentCount >= highThreshold {
             level          = .high
             explanationKey = "high"
         } else if presentCount >= mediumConfig.minimumSignalsPresent {
-            level          = .medium
-            explanationKey = missingExplanationKey(for: missing)
+            level = .medium
+            // When nothing is missing, generic "medium" must not imply unavailable data (e.g. recovery
+            // cannot reach high while policy requires five signals but the strand only expects four).
+            if missing.isEmpty {
+                explanationKey = "medium_confidence_full_signals"
+            } else {
+                explanationKey = missingExplanationKey(for: missing)
+            }
         } else {
             level          = .low
             explanationKey = "low"

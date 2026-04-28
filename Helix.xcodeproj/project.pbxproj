@@ -3,8 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 90;
 	objects = {
+
+/* Begin PBXBuildFile section */
+		C0DCDF1E2F632C61001F5E9E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0DCDF1D2F632C61001F5E9E /* WidgetKit.framework */; };
+		C0DCDF202F632C61001F5E9E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0DCDF1F2F632C61001F5E9E /* SwiftUI.framework */; };
+		C0DCDF2F2F632C62001F5E9E /* HelixWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C0DCDF1B2F632C61001F5E9E /* HelixWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		C052AB102F61F71B006DDDDD /* PBXContainerItemProxy */ = {
@@ -21,17 +27,75 @@
 			remoteGlobalIDString = C052AAFF2F61F71A006DDDDD;
 			remoteInfo = Helix;
 		};
+		C0DCDF2D2F632C62001F5E9E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C052AAF82F61F71A006DDDDD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0DCDF1A2F632C61001F5E9E;
+			remoteInfo = HelixWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C0DCDF302F632C62001F5E9E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				C0DCDF2F2F632C62001F5E9E /* HelixWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C052AB002F61F71A006DDDDD /* Helix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Helix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C052AB0F2F61F71B006DDDDD /* HelixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HelixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C052AB192F61F71C006DDDDD /* HelixUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HelixUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DCDF1B2F632C61001F5E9E /* HelixWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HelixWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DCDF1D2F632C61001F5E9E /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C0DCDF1F2F632C61001F5E9E /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C05347BD2F64D4AA007F007F /* Exceptions for "HelixWidget" folder in "HelixWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C0DCDF1A2F632C61001F5E9E /* HelixWidgetExtension */;
+		};
+		C05347BF2F64D4FE007F007F /* Exceptions for "Helix" folder in "HelixWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/HelixAppState.swift,
+				Data/Persistence/HelixBaselineSnapshot.swift,
+				Data/Persistence/HelixDailyRecord.swift,
+				Data/Persistence/HelixSchema.swift,
+				Domain/Models/HelixDomainModels.swift,
+				Domain/Models/SignalIdentifier.swift,
+			);
+			target = C0DCDF1A2F632C61001F5E9E /* HelixWidgetExtension */;
+		};
+		C0B3F4D62F65FF200040F9B3 /* Exceptions for "Helix" folder in "Helix" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C052AAFF2F61F71A006DDDDD /* Helix */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C052AB022F61F71A006DDDDD /* Helix */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C0B3F4D62F65FF200040F9B3 /* Exceptions for "Helix" folder in "Helix" target */,
+				C05347BF2F64D4FE007F007F /* Exceptions for "Helix" folder in "HelixWidgetExtension" target */,
+			);
+			explicitFolders = (
+				Resources/Policy,
+			);
 			path = Helix;
 			sourceTree = "<group>";
 		};
@@ -45,29 +109,38 @@
 			path = HelixUITests;
 			sourceTree = "<group>";
 		};
+		C0DCDF212F632C61001F5E9E /* HelixWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C05347BD2F64D4AA007F007F /* Exceptions for "HelixWidget" folder in "HelixWidgetExtension" target */,
+			);
+			path = HelixWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		C052AAFD2F61F71A006DDDDD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB0C2F61F71B006DDDDD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB162F61F71C006DDDDD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DCDF182F632C61001F5E9E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				C0DCDF202F632C61001F5E9E /* SwiftUI.framework in Frameworks */,
+				C0DCDF1E2F632C61001F5E9E /* WidgetKit.framework in Frameworks */,
+			);
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -78,6 +151,8 @@
 				C052AB022F61F71A006DDDDD /* Helix */,
 				C052AB122F61F71B006DDDDD /* HelixTests */,
 				C052AB1C2F61F71C006DDDDD /* HelixUITests */,
+				C0DCDF212F632C61001F5E9E /* HelixWidget */,
+				C0DCDF1C2F632C61001F5E9E /* Frameworks */,
 				C052AB012F61F71A006DDDDD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +163,18 @@
 				C052AB002F61F71A006DDDDD /* Helix.app */,
 				C052AB0F2F61F71B006DDDDD /* HelixTests.xctest */,
 				C052AB192F61F71C006DDDDD /* HelixUITests.xctest */,
+				C0DCDF1B2F632C61001F5E9E /* HelixWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C0DCDF1C2F632C61001F5E9E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C0DCDF1D2F632C61001F5E9E /* WidgetKit.framework */,
+				C0DCDF1F2F632C61001F5E9E /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,17 +187,17 @@
 				C052AAFC2F61F71A006DDDDD /* Sources */,
 				C052AAFD2F61F71A006DDDDD /* Frameworks */,
 				C052AAFE2F61F71A006DDDDD /* Resources */,
+				C0DCDF302F632C62001F5E9E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C0DCDF2E2F632C62001F5E9E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C052AB022F61F71A006DDDDD /* Helix */,
 			);
 			name = Helix;
-			packageProductDependencies = (
-			);
 			productName = Helix;
 			productReference = C052AB002F61F71A006DDDDD /* Helix.app */;
 			productType = "com.apple.product-type.application";
@@ -134,8 +219,6 @@
 				C052AB122F61F71B006DDDDD /* HelixTests */,
 			);
 			name = HelixTests;
-			packageProductDependencies = (
-			);
 			productName = HelixTests;
 			productReference = C052AB0F2F61F71B006DDDDD /* HelixTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -157,11 +240,27 @@
 				C052AB1C2F61F71C006DDDDD /* HelixUITests */,
 			);
 			name = HelixUITests;
-			packageProductDependencies = (
-			);
 			productName = HelixUITests;
 			productReference = C052AB192F61F71C006DDDDD /* HelixUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		C0DCDF1A2F632C61001F5E9E /* HelixWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0DCDF342F632C62001F5E9E /* Build configuration list for PBXNativeTarget "HelixWidgetExtension" */;
+			buildPhases = (
+				C0DCDF172F632C61001F5E9E /* Sources */,
+				C0DCDF182F632C61001F5E9E /* Frameworks */,
+				C0DCDF192F632C61001F5E9E /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				C0DCDF212F632C61001F5E9E /* HelixWidget */,
+			);
+			name = HelixWidgetExtension;
+			productName = HelixWidgetExtension;
+			productReference = C0DCDF1B2F632C61001F5E9E /* HelixWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -184,6 +283,9 @@
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = C052AAFF2F61F71A006DDDDD;
 					};
+					C0DCDF1A2F632C61001F5E9E = {
+						CreatedOnToolsVersion = 26.3;
+					};
 				};
 			};
 			buildConfigurationList = C052AAFB2F61F71A006DDDDD /* Build configuration list for PBXProject "Helix" */;
@@ -195,7 +297,7 @@
 			);
 			mainGroup = C052AAF72F61F71A006DDDDD;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 90;
 			productRefGroup = C052AB012F61F71A006DDDDD /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -203,6 +305,7 @@
 				C052AAFF2F61F71A006DDDDD /* Helix */,
 				C052AB0E2F61F71B006DDDDD /* HelixTests */,
 				C052AB182F61F71C006DDDDD /* HelixUITests */,
+				C0DCDF1A2F632C61001F5E9E /* HelixWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -210,48 +313,46 @@
 /* Begin PBXResourcesBuildPhase section */
 		C052AAFE2F61F71A006DDDDD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB0D2F61F71B006DDDDD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB172F61F71C006DDDDD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DCDF192F632C61001F5E9E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C052AAFC2F61F71A006DDDDD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB0B2F61F71B006DDDDD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C052AB152F61F71C006DDDDD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DCDF172F632C61001F5E9E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -266,10 +367,15 @@
 			target = C052AAFF2F61F71A006DDDDD /* Helix */;
 			targetProxy = C052AB1A2F61F71C006DDDDD /* PBXContainerItemProxy */;
 		};
+		C0DCDF2E2F632C62001F5E9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0DCDF1A2F632C61001F5E9E /* HelixWidgetExtension */;
+			targetProxy = C0DCDF2D2F632C62001F5E9E /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		C052AB212F61F71C006DDDDD /* Debug */ = {
+		C052AB212F61F71C006DDDDD /* Debug configuration for PBXProject "Helix" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -333,7 +439,7 @@
 			};
 			name = Debug;
 		};
-		C052AB222F61F71C006DDDDD /* Release */ = {
+		C052AB222F61F71C006DDDDD /* Release configuration for PBXProject "Helix" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -390,16 +496,21 @@
 			};
 			name = Release;
 		};
-		C052AB242F61F71C006DDDDD /* Debug */ = {
+		C052AB242F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "Helix" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Helix/Helix.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 56T9R359AG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Helix/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Helix reads your health data to calculate your daily readiness score and posture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -422,16 +533,21 @@
 			};
 			name = Debug;
 		};
-		C052AB252F61F71C006DDDDD /* Release */ = {
+		C052AB252F61F71C006DDDDD /* Release configuration for PBXNativeTarget "Helix" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Helix/Helix.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 56T9R359AG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Helix/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Helix reads your health data to calculate your daily readiness score and posture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -454,7 +570,7 @@
 			};
 			name = Release;
 		};
-		C052AB272F61F71C006DDDDD /* Debug */ = {
+		C052AB272F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "HelixTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -476,7 +592,7 @@
 			};
 			name = Debug;
 		};
-		C052AB282F61F71C006DDDDD /* Release */ = {
+		C052AB282F61F71C006DDDDD /* Release configuration for PBXNativeTarget "HelixTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -498,7 +614,7 @@
 			};
 			name = Release;
 		};
-		C052AB2A2F61F71C006DDDDD /* Debug */ = {
+		C052AB2A2F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "HelixUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -518,7 +634,7 @@
 			};
 			name = Debug;
 		};
-		C052AB2B2F61F71C006DDDDD /* Release */ = {
+		C052AB2B2F61F71C006DDDDD /* Release configuration for PBXNativeTarget "HelixUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -535,6 +651,74 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Helix;
+			};
+			name = Release;
+		};
+		C0DCDF312F632C62001F5E9E /* Debug configuration for PBXNativeTarget "HelixWidgetExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = HelixWidgetExtension/HelixWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 56T9R359AG;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HelixWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HelixWidget;
+				INFOPLIST_KEY_CFBundleIdentifier = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix.HelixWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C0DCDF322F632C62001F5E9E /* Release configuration for PBXNativeTarget "HelixWidgetExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = HelixWidgetExtension/HelixWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 56T9R359AG;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HelixWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HelixWidget;
+				INFOPLIST_KEY_CFBundleIdentifier = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix.HelixWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -544,37 +728,41 @@
 		C052AAFB2F61F71A006DDDDD /* Build configuration list for PBXProject "Helix" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C052AB212F61F71C006DDDDD /* Debug */,
-				C052AB222F61F71C006DDDDD /* Release */,
+				C052AB212F61F71C006DDDDD /* Debug configuration for PBXProject "Helix" */,
+				C052AB222F61F71C006DDDDD /* Release configuration for PBXProject "Helix" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C052AB232F61F71C006DDDDD /* Build configuration list for PBXNativeTarget "Helix" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C052AB242F61F71C006DDDDD /* Debug */,
-				C052AB252F61F71C006DDDDD /* Release */,
+				C052AB242F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "Helix" */,
+				C052AB252F61F71C006DDDDD /* Release configuration for PBXNativeTarget "Helix" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C052AB262F61F71C006DDDDD /* Build configuration list for PBXNativeTarget "HelixTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C052AB272F61F71C006DDDDD /* Debug */,
-				C052AB282F61F71C006DDDDD /* Release */,
+				C052AB272F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "HelixTests" */,
+				C052AB282F61F71C006DDDDD /* Release configuration for PBXNativeTarget "HelixTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C052AB292F61F71C006DDDDD /* Build configuration list for PBXNativeTarget "HelixUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C052AB2A2F61F71C006DDDDD /* Debug */,
-				C052AB2B2F61F71C006DDDDD /* Release */,
+				C052AB2A2F61F71C006DDDDD /* Debug configuration for PBXNativeTarget "HelixUITests" */,
+				C052AB2B2F61F71C006DDDDD /* Release configuration for PBXNativeTarget "HelixUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0DCDF342F632C62001F5E9E /* Build configuration list for PBXNativeTarget "HelixWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0DCDF312F632C62001F5E9E /* Debug configuration for PBXNativeTarget "HelixWidgetExtension" */,
+				C0DCDF322F632C62001F5E9E /* Release configuration for PBXNativeTarget "HelixWidgetExtension" */,
+			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

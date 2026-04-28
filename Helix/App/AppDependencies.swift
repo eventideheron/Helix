@@ -25,6 +25,7 @@ class AppDependencies {
     let indexCalc:            HelixIndexCalculator
     let explanationEngine:    HelixExplanationEngine
     let historyEngine:        HelixHistoryEngine
+    let crossStrandEngine:    HelixCrossStrandEngine
     let policyValidator:      HelixPolicyValidator.Type
 
     init() {
@@ -52,32 +53,38 @@ class AppDependencies {
         self.loadProvider     = LoadDataProvider()
         self.historyProvider  = HistoryDataProvider()
 
-        // Engines (order matters: confidence must exist before calculators)
+        // Engines (order matters: confidence + explanation must exist before calculators that resolve copy)
         let confidence = HelixConfidenceEngine(policy: bundle.confidence)
+        let explanation = HelixExplanationEngine(policy: bundle.explanation)
         self.confidenceEngine    = confidence
-        self.baselineEngine      = HelixBaselineEngine(
-            policy: bundle.core,
-            confidencePolicy: bundle.confidence
-        )
+        self.explanationEngine   = explanation
+        self.baselineEngine      = HelixBaselineEngine(policy: bundle.core)
         self.normalisationEngine = SignalNormalizationEngine(
             policy: bundle.core,
             confidencePolicy: bundle.confidence
         )
         self.sleepCalc           = HelixSleepCalculator(
             policy: bundle.core.strandSleep,
-            confidenceEngine: confidence
+            confidenceEngine: confidence,
+            explanationEngine: explanation
         )
         self.loadCalc            = HelixLoadCalculator(
             policy: bundle.core.strandLoad,
-            confidenceEngine: confidence
+            confidenceEngine: confidence,
+            explanationEngine: explanation,
+            hrElevationBands: bundle.explanation.signalThresholds.hrElevation
         )
         self.recoveryCalc        = HelixRecoveryCalculator(
             policy: bundle.core.strandRecovery,
-            confidenceEngine: confidence
+            confidenceEngine: confidence,
+            explanationEngine: explanation,
+            restingHrExplanationThresholds: bundle.explanation.signalThresholds.restingHr,
+            hrvExplanationThresholds: bundle.explanation.signalThresholds.hrv
         )
         self.indexCalc           = HelixIndexCalculator(policy: bundle.core.helixIndex)
-        self.explanationEngine   = HelixExplanationEngine(policy: bundle.explanation)
         self.historyEngine       = HelixHistoryEngine(policy: bundle.history)
+        self.crossStrandEngine   = HelixCrossStrandEngine(policy: bundle.crossStrand)
+
         self.policyValidator     = HelixPolicyValidator.self
     }
 }

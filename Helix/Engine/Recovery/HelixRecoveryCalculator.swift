@@ -13,10 +13,23 @@ class HelixRecoveryCalculator {
 
     private let policy: RecoveryConfig
     private let confidenceEngine: HelixConfidenceEngine
+    private let explanationEngine: HelixExplanationEngine
+    private let restingHrExplanationThresholds: RHRThresholds?
+    /// HRV explanation routing: percent-delta bands from `helix_explanation_policy.signal_thresholds.hrv` (ratio-form delta).
+    private let hrvExplanationThresholds: HRVThresholds?
 
-    init(policy: RecoveryConfig, confidenceEngine: HelixConfidenceEngine) {
+    init(
+        policy: RecoveryConfig,
+        confidenceEngine: HelixConfidenceEngine,
+        explanationEngine: HelixExplanationEngine,
+        restingHrExplanationThresholds: RHRThresholds? = nil,
+        hrvExplanationThresholds: HRVThresholds? = nil
+    ) {
         self.policy = policy
         self.confidenceEngine = confidenceEngine
+        self.explanationEngine = explanationEngine
+        self.restingHrExplanationThresholds = restingHrExplanationThresholds
+        self.hrvExplanationThresholds = hrvExplanationThresholds
     }
 
     func calculate(
@@ -26,12 +39,25 @@ class HelixRecoveryCalculator {
         overnightRR: Double?,
         spo2Rolling7Night: Double?,
         baselines: [SignalIdentifier: PersonalBaseline]
-    ) -> (score: Double, missing: [SignalIdentifier]) {
+    ) -> (
+        score: Double,
+        missing: [SignalIdentifier],
+        contributions: [SignalContribution],
+        componentSignals: [HelixSignal],
+        primaryExplanation: String
+    ) {
 
         let w = policy.weights
-        var originalWeights  = [SignalIdentifier: Double]()
+        let originalWeights: [SignalIdentifier: Double] = [
+            .hrv:                 w.hrv,
+            .restingHR:           w.restingHr,
+            .overnightHRDip:      w.overnightHrDip,
+            .respiratoryRecovery: w.respiratory
+        ]
         var scores           = [SignalIdentifier: Double]()
         var missing          = [SignalIdentifier]()
+        var signals          = [HelixSignal]()
+        let now              = Date()
 
         // MARK: HRV Component
         if let hrv = todayHRV,
@@ -41,7 +67,13 @@ class HelixRecoveryCalculator {
             let score = (policy.hrv.midpoint + deltaRatio * policy.hrv.sensitivity)
                 .clampedToHelixScore()
             scores[.hrv]         = score
-            originalWeights[.hrv] = w.hrv
+            _ = hrv - baseline
+            signals.append(HelixSignal(
+                identifier: .hrv, rawValue: hrv,
+                unit: "ms", timestamp: now, baseline: baseline,
+                deltaFromBaseline: deltaRatio, normalizedScore: score,
+                isValid: true, isAnomaly: false
+            ))
         } else {
             missing.append(.hrv)
         }
@@ -53,19 +85,31 @@ class HelixRecoveryCalculator {
             let score = (100.0 - delta * policy.restingHr.costPerBpmAboveBaseline)
                 .clampedToHelixScore()
             scores[.restingHR]          = score
-            originalWeights[.restingHR] = w.restingHr
+            signals.append(HelixSignal(
+                identifier: .restingHR, rawValue: rhr,
+                unit: "bpm", timestamp: now, baseline: baseline,
+                deltaFromBaseline: delta, normalizedScore: score,
+                isValid: true, isAnomaly: false
+            ))
         } else {
             missing.append(.restingHR)
         }
 
         // MARK: Overnight HR Dip Component
         if let minHR = minSleepHR,
-           let baseline = baselines[.restingHR]?.value {
-            let dipBPM = baseline - minHR
+           let restingBaseline = baselines[.restingHR]?.value {
+            let dipBPM = restingBaseline - minHR
+            let dipBaseline = baselines[.overnightHRDip]?.value ?? 0
+            let dipDelta = dipBPM - dipBaseline
             let score = (dipBPM * policy.overnightHrDip.scoreMultiplier)
                 .clampedToHelixScore()
             scores[.overnightHRDip]          = score
-            originalWeights[.overnightHRDip] = w.overnightHrDip
+            signals.append(HelixSignal(
+                identifier: .overnightHRDip, rawValue: dipBPM,
+                unit: "bpm", timestamp: now, baseline: dipBaseline,
+                deltaFromBaseline: dipDelta, normalizedScore: score,
+                isValid: true, isAnomaly: false
+            ))
         } else {
             missing.append(.overnightHRDip)
         }
@@ -80,7 +124,13 @@ class HelixRecoveryCalculator {
                 rrScore = (rrScore * spo2Modifier(for: spo2)).clampedToHelixScore()
             }
             scores[.respiratoryRecovery]          = rrScore
-            originalWeights[.respiratoryRecovery] = w.respiratory
+            let delta = rr - baseline
+            signals.append(HelixSignal(
+                identifier: .respiratoryRecovery, rawValue: rr,
+                unit: "/min", timestamp: now, baseline: baseline,
+                deltaFromBaseline: delta, normalizedScore: rrScore,
+                isValid: true, isAnomaly: false
+            ))
         } else {
             missing.append(.respiratoryRecovery)
         }
@@ -93,9 +143,102 @@ class HelixRecoveryCalculator {
 
         let composite = scores.reduce(0.0) { acc, pair in
             acc + pair.value * (adjustedWeights[pair.key] ?? 0)
-        }
+        }.clampedToHelixScore()
 
-        return (composite.clampedToHelixScore(), missing)
+        // MARK: Contribution breakdown (explanation keys for ViewModel to resolve)
+        var contributions = [SignalContribution]()
+        for (signal, score) in scores {
+            let weight = adjustedWeights[signal] ?? 0
+            let pointContribution = score * weight
+            let explanationKey = recoveryExplanationKey(for: signal, score: score, scores: scores, todayHRV: todayHRV, todayRHR: todayRHR, minSleepHR: minSleepHR, overnightRR: overnightRR, baselines: baselines)
+            let deltaDesc = recoveryDeltaDescription(for: signal, scores: scores, todayHRV: todayHRV, todayRHR: todayRHR, minSleepHR: minSleepHR, overnightRR: overnightRR, baselines: baselines)
+            contributions.append(SignalContribution(
+                signal: signal,
+                pointContribution: pointContribution,
+                explanation: explanationKey,
+                deltaDescription: deltaDesc
+            ))
+        }
+        contributions.sort { abs($0.pointContribution) > abs($1.pointContribution) }
+
+        /// Strand headline: score-band narrative (`strand_recovery.*`), not top contributor copy.
+        let primaryExplanation = recoveryStrandNarrative(score: composite)
+
+        return (composite, missing, contributions, signals, primaryExplanation)
+    }
+
+    private func recoveryStrandNarrative(score: Double) -> String {
+        let key: String
+        if score >= 80 { key = "strand_recovery.strong" }
+        else if score >= 65 { key = "strand_recovery.good" }
+        else if score >= 45 { key = "strand_recovery.moderate" }
+        else if score >= 25 { key = "strand_recovery.low" }
+        else { key = "strand_recovery.poor" }
+        return explanationEngine.explanation(fromKey: key)
+    }
+
+    private func recoveryExplanationKey(for signal: SignalIdentifier, score: Double, scores: [SignalIdentifier: Double], todayHRV: Double?, todayRHR: Double?, minSleepHR: Double?, overnightRR: Double?, baselines: [SignalIdentifier: PersonalBaseline]) -> String {
+        switch signal {
+        case .hrv:
+            guard let t = hrvExplanationThresholds,
+                  let hrv = todayHRV,
+                  let bl = baselines[.hrv]?.value,
+                  bl > 0
+            else {
+                return "hrv.within_baseline"
+            }
+            let deltaRatio = (hrv - bl) / bl
+            if deltaRatio <= -t.strongDropPercent { return "hrv.strong_drop" }
+            if deltaRatio <= -t.significantDropPercent { return "hrv.significant_drop" }
+            if deltaRatio <= -t.notableDropPercent { return "hrv.notable_drop" }
+            if deltaRatio >= t.significantRisePercent { return "hrv.significant_rise" }
+            if deltaRatio >= t.notableRisePercent { return "hrv.notable_rise" }
+            return "hrv.within_baseline"
+        case .restingHR:
+            if let t = restingHrExplanationThresholds, let rhr = todayRHR, let bl = baselines[.restingHR]?.value {
+                let bpmDelta = rhr - bl
+                if bpmDelta > t.strongRiseBpm { return "resting_hr.strong_rise" }
+                if bpmDelta > t.significantRiseBpm { return "resting_hr.significant_rise" }
+                if bpmDelta > t.notableRiseBpm { return "resting_hr.notable_rise" }
+                if bpmDelta < -t.notableDropBpm { return "resting_hr.notable_drop" }
+                return "resting_hr.within_baseline"
+            }
+            if score < 50 { return "resting_hr.strong_rise" }
+            if score < 65 { return "resting_hr.notable_rise" }
+            if score > 75 { return "resting_hr.notable_drop" }
+            return "resting_hr.within_baseline"
+        case .overnightHRDip:
+            if score > 80 { return "overnight_hr_dip.strong" }
+            if score > 50 { return "overnight_hr_dip.moderate" }
+            return "overnight_hr_dip.shallow"
+        case .respiratoryRecovery:
+            if score < 70 { return "respiratory.elevated" }
+            return "respiratory.stable"
+        default:
+            return signal.explanationKey
+        }
+    }
+
+    private func recoveryDeltaDescription(for signal: SignalIdentifier, scores: [SignalIdentifier: Double], todayHRV: Double?, todayRHR: Double?, minSleepHR: Double?, overnightRR: Double?, baselines: [SignalIdentifier: PersonalBaseline]) -> String {
+        switch signal {
+        case .hrv:
+            guard let hrv = todayHRV, let bl = baselines[.hrv]?.value else { return "" }
+            let d = hrv - bl
+            return String(format: "%+.0f ms", d)
+        case .restingHR:
+            guard let rhr = todayRHR, let bl = baselines[.restingHR]?.value else { return "" }
+            return String(format: "%+.0f bpm", rhr - bl)
+        case .overnightHRDip:
+            guard let minHR = minSleepHR, let rhrBl = baselines[.restingHR]?.value else { return "" }
+            let dipBPM = rhrBl - minHR
+            let dipBl = baselines[.overnightHRDip]?.value ?? 0
+            return String(format: "%+.0f bpm", dipBPM - dipBl)
+        case .respiratoryRecovery:
+            guard let rr = overnightRR, let bl = baselines[.overnightRespiratory]?.value else { return "" }
+            return String(format: "%+.1f /min", rr - bl)
+        default:
+            return ""
+        }
     }
 
     // MARK: — SpO2 modifier (reads thresholds and modifiers from policy)

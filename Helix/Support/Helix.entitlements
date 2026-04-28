@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Support/Helix.entitlements
+     Add this file to both the Helix app target and HelixWidgetExtension target in Xcode.
+     Update the App Group identifier to match your Apple Developer account.
+     HealthKit entitlement is required on the main app target only.
+-->
+<plist version="1.0">
+<dict>
+    <!-- App Group — required for widget to read shared SwiftData store -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.joshlang.helix</string>
+    </array>
+
+    <!-- HealthKit — main app target only; remove from widget target -->
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.access</key>
+    <array/>
+
+    <!-- Background refresh — for morning HealthKit fetch before user opens app -->
+    <!-- Enable in Xcode: Signing & Capabilities → Background Modes → Background fetch -->
+</dict>
+</plist>

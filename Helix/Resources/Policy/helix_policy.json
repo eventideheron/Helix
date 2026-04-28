@@ -1,0 +1,271 @@
+{
+  "policy_version": "1.1",
+  "created": "2026-03-10",
+  "updated": "2026-03-10",
+  "status": "active",
+  "description": "Core physiological scoring model. All coefficients are calibrated starting points based on physiological reasoning. Personal validation required. v1.1 fixes decay rate key mismatches and adds missing validation ranges.",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-03-10",
+      "notes": "Initial release."
+    },
+    {
+      "version": "1.1",
+      "date": "2026-03-10",
+      "notes": "CRITICAL FIX: Normalized decay_rates keys to match SignalIdentifier rawValues used in Swift engine (resting_hr, sleep_duration, respiratory_rate, wrist_temperature). Added missing validation_ranges for spo2_rolling_average and bedtime_wake_variance_minutes. These mismatches caused silent fallback to 0.94 decay rate for sleep_duration, respiratory_rate, and wrist_temperature baselines."
+    },
+    {
+      "version": "1.1",
+      "date": "2026-04-01",
+      "notes": "Load `strand_load.hr_elevation` coefficients activated in app code (cost_per_bpm_above_baseline 7.0, maximum_penalty 30.0); scoring uses workout HR vs resting HR EWMA baseline. No coefficient changes in this JSON."
+    }
+  ],
+  "validation_ranges": {
+    "sleep_duration_hours": {
+      "min": 2.0,
+      "max": 14.0
+    },
+    "hrv_sdnn_ms": {
+      "min": 5.0,
+      "max": 200.0
+    },
+    "resting_hr_bpm": {
+      "min": 30.0,
+      "max": 120.0
+    },
+    "respiratory_rate_brpm": {
+      "min": 6.0,
+      "max": 30.0
+    },
+    "spo2_percent": {
+      "min": 70.0,
+      "max": 100.0
+    },
+    "wrist_temp_celsius_delta": {
+      "min": -3.0,
+      "max": 3.0
+    },
+    "active_energy_kcal_daily": {
+      "min": 0.0,
+      "max": 6000.0
+    },
+    "hr_dip_bpm": {
+      "min": 0.0,
+      "max": 60.0
+    },
+    "deep_sleep_percent": {
+      "min": 0.0,
+      "max": 1.0
+    },
+    "rem_sleep_percent": {
+      "min": 0.0,
+      "max": 1.0
+    },
+    "awakenings_per_hour": {
+      "min": 0.0,
+      "max": 20.0
+    },
+    "spo2_rolling_average_percent": {
+      "min": 70.0,
+      "max": 100.0
+    },
+    "bedtime_variance_minutes": {
+      "min": 0.0,
+      "max": 480.0
+    },
+    "wake_variance_minutes": {
+      "min": 0.0,
+      "max": 480.0
+    }
+  },
+  "baseline": {
+    "window_days": 90,
+    "minimum_days_to_activate": 14,
+    "method": "exponentially_weighted_moving_average",
+    "decay_rates": {
+      "hrv": 0.96,
+      "resting_hr": 0.94,
+      "sleep_duration": 0.93,
+      "sleep_consistency": 0.93,
+      "deep_sleep_percent": 0.93,
+      "rem_sleep_percent": 0.93,
+      "wrist_temperature": 0.9,
+      "respiratory_rate": 0.94,
+      "acute_training_load": 0.88,
+      "active_energy": 0.88,
+      "overnight_hr_dip": 0.94
+    }
+  },
+  "strand_sleep": {
+    "note": "Architecture split into three separate components: deep_sleep, rem_sleep, disturbance. Each scored independently before weighting.",
+    "weights": {
+      "duration": 0.3,
+      "deep_sleep": 0.15,
+      "rem_sleep": 0.13,
+      "disturbance": 0.12,
+      "consistency": 0.2,
+      "thermal": 0.05,
+      "respiratory": 0.05
+    },
+    "duration": {
+      "undersleep_cost_per_hour": 18.0,
+      "oversleep_cost_per_hour": 13.0
+    },
+    "deep_sleep": {
+      "baseline_comparison": "personal",
+      "max_component_score": 100.0
+    },
+    "rem_sleep": {
+      "baseline_comparison": "personal",
+      "max_component_score": 100.0
+    },
+    "disturbance": {
+      "cost_per_awakening_per_hour": 4.0,
+      "max_score": 100.0
+    },
+    "consistency": {
+      "bedtime_variance_cost_per_minute": 0.4,
+      "wake_variance_cost_per_minute": 0.3,
+      "variance_window_days": 7
+    },
+    "thermal": {
+      "sensitivity": 20.0,
+      "anomaly_flag_threshold_celsius": 0.8
+    },
+    "respiratory": {
+      "sensitivity": 22.0
+    },
+    "population_defaults": {
+      "sleep_duration_hours": 7.0,
+      "deep_sleep_fraction": 0.2,
+      "rem_sleep_fraction": 0.22
+    }
+  },
+  "strand_load": {
+    "weights": {
+      "acwr": 0.4,
+      "acute_load": 0.35,
+      "activity_completion": 0.15,
+      "hr_elevation_penalty": 0.1
+    },
+    "heart_rate_zones": {
+      "method": "tanaka_formula",
+      "tanaka_formula_note": "max_hr = 208 - (0.7 * age). Falls back to age=30 if HealthKit date of birth unavailable. When fallback is active, Load strand confidence is capped at medium.",
+      "zone_boundaries_percent_max_hr": {
+        "zone_1": {
+          "low": 0.5,
+          "high": 0.6
+        },
+        "zone_2": {
+          "low": 0.6,
+          "high": 0.7
+        },
+        "zone_3": {
+          "low": 0.7,
+          "high": 0.8
+        },
+        "zone_4": {
+          "low": 0.8,
+          "high": 0.9
+        },
+        "zone_5": {
+          "low": 0.9,
+          "high": 1.0
+        }
+      },
+      "zone_stress_multipliers": {
+        "zone_1": 0.5,
+        "zone_2": 1.0,
+        "zone_3": 1.5,
+        "zone_4": 2.2,
+        "zone_5": 3.0
+      },
+      "neat_energy_multiplier": 0.015
+    },
+    "acute_chronic": {
+      "acute_window_days": 7,
+      "chronic_window_days": 28,
+      "acute_decay": 0.85,
+      "chronic_decay": 0.94
+    },
+    "acwr_scoring": {
+      "note": "ACWR is a load-balance metric. Not presented as an injury predictor.",
+      "undertraining_ceiling": 0.7,
+      "optimal_low": 0.8,
+      "optimal_high": 1.3,
+      "caution_ceiling": 1.5
+    },
+    "hr_elevation": {
+      "cost_per_bpm_above_baseline": 7.0,
+      "maximum_penalty": 30.0
+    }
+  },
+  "strand_recovery": {
+    "weights": {
+      "hrv": 0.35,
+      "resting_hr": 0.25,
+      "overnight_hr_dip": 0.25,
+      "respiratory": 0.15
+    },
+    "hrv": {
+      "sensitivity": 220.0,
+      "midpoint": 50.0
+    },
+    "resting_hr": {
+      "cost_per_bpm_above_baseline": 9.0
+    },
+    "overnight_hr_dip": {
+      "score_multiplier": 8.0,
+      "minimum_hr_samples_required": 60
+    },
+    "respiratory": {
+      "sensitivity": 22.0
+    },
+    "spo2": {
+      "note": "SpO2 is a modifier on respiratory score only. Uses 7-night rolling average to reduce noise from intermittent Apple Watch sampling.",
+      "rolling_average_nights": 7,
+      "thresholds": {
+        "nominal": 95.0,
+        "caution": 93.0,
+        "concern": 90.0
+      },
+      "modifiers": {
+        "nominal": 1.0,
+        "caution": 0.85,
+        "concern": 0.65,
+        "critical": 0.4
+      }
+    }
+  },
+  "helix_index": {
+    "weights": {
+      "sleep": 0.35,
+      "recovery": 0.35,
+      "load": 0.3
+    },
+    "interaction_terms": {
+      "note": "Sleep amplifies recovery. Load suppresses recovery. Max net effect approximately +8 / -10 points on adjusted recovery before weighting.",
+      "sleep_boost_divisor": 600.0,
+      "load_cost_divisor": 500.0
+    },
+    "recovery_gate": {
+      "note": "Severe is the worse state. Check severe threshold first. A collapsed recovery score suppresses the full Helix Index regardless of sleep and load scores.",
+      "severe_threshold": 20,
+      "severe_multiplier": 0.55,
+      "critical_threshold": 35,
+      "critical_multiplier": 0.75
+    },
+    "balance_penalty": {
+      "note": "Penalizes high average when one strand has collapsed. Triple helix requires all three strands.",
+      "variance_multiplier": 0.15,
+      "maximum_penalty": 12.0
+    },
+    "posture_thresholds": {
+      "note": "UI layer maps these thresholds to colors and language. Colors are never defined in policy.",
+      "pursue": 75,
+      "moderate": 50,
+      "restore": 0
+    }
+  }
+}
