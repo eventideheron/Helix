@@ -43,7 +43,8 @@ class HelixConfidenceEngine {
         presentSignals: [SignalIdentifier],
         validSignals: [SignalIdentifier],
         allExpectedSignals: [SignalIdentifier],
-        watchOfflineHours: Double = 0
+        watchOfflineHours: Double = 0,
+        consecutiveHRVAbsentDays: Int = 0
     ) -> ConfidenceResult {
 
         let missing = allExpectedSignals.filter {
@@ -98,7 +99,7 @@ class HelixConfidenceEngine {
             if missing.isEmpty {
                 explanationKey = "medium_confidence_full_signals"
             } else {
-                explanationKey = missingExplanationKey(for: missing)
+                explanationKey = missingExplanationKey(for: missing, consecutiveHRVAbsentDays: consecutiveHRVAbsentDays)
             }
         } else {
             level          = .low
@@ -159,9 +160,13 @@ class HelixConfidenceEngine {
 
     // MARK: — Private helpers
 
-    private func missingExplanationKey(for missing: [SignalIdentifier]) -> String {
-        // Return the most informative specific key if available
-        if missing.contains(.hrv)              { return "missing_hrv" }
+    private func missingExplanationKey(
+        for missing: [SignalIdentifier],
+        consecutiveHRVAbsentDays: Int = 0
+    ) -> String {
+        if missing.contains(.hrv) {
+            return consecutiveHRVAbsentDays >= 7 ? "hrv_device_unavailable" : "missing_hrv"
+        }
         if missing.contains(.deepSleepPercent) ||
            missing.contains(.remSleepPercent)  { return "missing_staging" }
         if missing.contains(.wristTemperature) { return "missing_temperature" }

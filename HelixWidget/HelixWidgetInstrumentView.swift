@@ -32,10 +32,15 @@ struct HelixWidgetInstrumentView: View {
     // Canonical palette values copied from HelixColor in
     // Helix/Helix/SharedUI/Theme/Colors.swift. SharedUI is not in the
     // widget target — values are inlined here verbatim.
+    // Accent colors — visual elements only (radar arcs, bar fills, dots)
     static let sleepColor:    Color = Color(red:  74.0 / 255.0, green:  85.0 / 255.0, blue: 162.0 / 255.0) // #4A55A2
     static let loadColor:     Color = Color(red:   0.0 / 255.0, green: 227.0 / 255.0, blue: 255.0 / 255.0) // #00E3FF
     static let recoveryColor: Color = Color(red:  46.0 / 255.0, green: 143.0 / 255.0, blue: 110.0 / 255.0) // #2E8F6E
     static let neutralColor:  Color = Color(red: 139.0 / 255.0, green: 148.0 / 255.0, blue: 158.0 / 255.0) // #8B949E
+    // Text colors — rendered labels and scores only (6.3:1 / 11.1:1 / 6.9:1 contrast on dark bg)
+    static let sleepTextColor:    Color = Color(red: 139.0 / 255.0, green: 150.0 / 255.0, blue: 232.0 / 255.0) // #8B96E8
+    static let loadTextColor:     Color = Color(red:   0.0 / 255.0, green: 227.0 / 255.0, blue: 255.0 / 255.0) // #00E3FF same as accent
+    static let recoveryTextColor: Color = Color(red:  61.0 / 255.0, green: 184.0 / 255.0, blue: 128.0 / 255.0) // #3DB880
 
     var body: some View {
         GeometryReader { geo in

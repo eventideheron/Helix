@@ -508,9 +508,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Helix/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "";
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Alpha Helix";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Helix reads your health data to calculate your daily readiness score and posture.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Helix reads your health data to calculate your daily readiness score.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -521,7 +523,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -545,9 +547,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Helix/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "";
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Alpha Helix";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Helix reads your health data to calculate your daily readiness score and posture.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Helix reads your health data to calculate your daily readiness score.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -558,7 +562,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -580,7 +584,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.HelixTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -602,7 +606,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.HelixTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -622,7 +626,7 @@
 				DEVELOPMENT_TEAM = 56T9R359AG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.HelixUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -642,7 +646,7 @@
 				DEVELOPMENT_TEAM = 56T9R359AG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.HelixUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -659,7 +663,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = HelixWidgetExtension/HelixWidgetExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HelixWidget/HelixWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 56T9R359AG;
@@ -676,7 +680,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix.HelixWidget";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -693,7 +697,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = HelixWidgetExtension/HelixWidgetExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HelixWidget/HelixWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 56T9R359AG;
@@ -710,7 +714,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Triple-Helix.Helix.HelixWidget";
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshlang.helix.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

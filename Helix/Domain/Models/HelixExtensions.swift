@@ -12,6 +12,13 @@ extension Double {
     }
 }
 
+// MARK: — TestFlight detection
+extension Bundle {
+    static var isTestFlight: Bool {
+        main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+    }
+}
+
 // MARK: — Load calculation context
 // Carries user age for Tanaka max HR formula.
 // ageIsEstimated = true when HealthKit date of birth was unavailable and the

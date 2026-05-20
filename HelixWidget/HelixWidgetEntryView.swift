@@ -136,21 +136,21 @@ struct MediumWidgetView: View {
             .frame(maxWidth: .infinity)
 
             VStack(alignment: .leading, spacing: 10) {
-                strandRow(label: "SLEEP",    score: record.sleepScore,    color: HelixWidgetInstrumentView.sleepColor)
-                strandRow(label: "LOAD",     score: record.loadScore,     color: HelixWidgetInstrumentView.loadColor)
-                strandRow(label: "RECOVERY", score: record.recoveryScore, color: HelixWidgetInstrumentView.recoveryColor)
+                strandRow(label: "SLEEP",    score: record.sleepScore,    color: HelixWidgetInstrumentView.sleepColor,    textColor: HelixWidgetInstrumentView.sleepTextColor)
+                strandRow(label: "LOAD",     score: record.loadScore,     color: HelixWidgetInstrumentView.loadColor,     textColor: HelixWidgetInstrumentView.loadTextColor)
+                strandRow(label: "RECOVERY", score: record.recoveryScore, color: HelixWidgetInstrumentView.recoveryColor, textColor: HelixWidgetInstrumentView.recoveryTextColor)
             }
             .frame(maxWidth: .infinity)
         }
         .padding()
     }
 
-    private func strandRow(label: String, score: Double, color: Color) -> some View {
+    private func strandRow(label: String, score: Double, color: Color, textColor: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
                 .font(.system(size: 7, weight: .semibold))
                 .tracking(2)
-                .foregroundColor(color.opacity(0.7))
+                .foregroundColor(textColor)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -164,7 +164,7 @@ struct MediumWidgetView: View {
             .frame(height: 3)
             Text("\(Int(score))")
                 .font(.system(size: 16, weight: .thin, design: .rounded))
-                .foregroundColor(color)
+                .foregroundColor(textColor)
         }
     }
 }

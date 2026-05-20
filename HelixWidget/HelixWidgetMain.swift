@@ -22,6 +22,10 @@ let helixAppGroupID = "group.com.joshlang.helix"
 
 @main
 struct HelixWidgetBundle: WidgetBundle {
+    init() {
+        HelixWidgetHealthKitObserver.shared.registerBackgroundDelivery()
+    }
+
     var body: some Widget {
         HelixWidget()
     }

@@ -14,6 +14,7 @@
 import SwiftUI
 import SwiftData
 import Combine
+import WidgetKit
 
 @MainActor
 class HelixViewModel: ObservableObject {
@@ -196,7 +197,11 @@ class HelixViewModel: ObservableObject {
                 from: historyWithACWR,
                 cachedSnapshots: cachedSnapshots
             )
-            let dataPointCount = historyData.hrvReadings.count
+            let dataPointCount = max(
+                historyData.hrvReadings.count,
+                historyData.rhrReadings.count,
+                historyData.sleepReadings.count
+            )
 
             #if DEBUG
             let windowDays = policyBundle.core.baseline.windowDays
@@ -264,11 +269,25 @@ class HelixViewModel: ObservableObject {
                 baselines:         baselines
             )
 
+            let consecutiveHRVAbsentDays: Int = {
+                let calendar = Calendar.current
+                let readingDays = Set(historyData.hrvReadings.map { calendar.startOfDay(for: $0.date) })
+                var count = 0
+                var day = calendar.startOfDay(for: Date())
+                while !readingDays.contains(day) && count <= 90 {
+                    count += 1
+                    guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+                    day = prev
+                }
+                return count
+            }()
+
             let recoveryConfidenceResult = confidenceEngine.evaluate(
                 presentSignals: Array(validatedRecovery.filter { $0.value.isUsable }.keys),
                 validSignals:   Array(validatedRecovery.filter { $0.value.isUsable }.keys),
                 allExpectedSignals: [.hrv, .restingHR, .overnightHRDip, .respiratoryRecovery],
-                watchOfflineHours: 0   // TODO: calculate from watch last-seen timestamp
+                watchOfflineHours: 0,   // TODO: calculate from watch last-seen timestamp
+                consecutiveHRVAbsentDays: consecutiveHRVAbsentDays
             )
 
             // Keep template keys on contributions (same as sleep/load). Resolve copy at display via `HelixExplanationEngine`.
@@ -346,6 +365,34 @@ class HelixViewModel: ObservableObject {
                 appState: appState,
                 dataPointCount: dataPointCount
             )
+
+            // Push latest scores to shared App Group so the widget reads fresh data,
+            // then invalidate the widget timeline so it reloads immediately.
+            if let defaults = UserDefaults(suiteName: helixAppGroupID) {
+                let idx = index
+                struct WidgetSnap: Encodable {
+                    let date: Date
+                    let helixIndex: Double
+                    let postureRaw: String
+                    let sleepScore: Double
+                    let loadScore: Double
+                    let recoveryScore: Double
+                    let confidenceRaw: String
+                }
+                let snap = WidgetSnap(
+                    date:          idx.date,
+                    helixIndex:    idx.score,
+                    postureRaw:    idx.posture.rawValue,
+                    sleepScore:    idx.sleepStrand.score,
+                    loadScore:     idx.loadStrand.score,
+                    recoveryScore: idx.recoveryStrand.score,
+                    confidenceRaw: idx.overallConfidence.rawValue
+                )
+                if let data = try? JSONEncoder().encode(snap) {
+                    defaults.set(data, forKey: "helix.widget.record")
+                }
+            }
+            WidgetCenter.shared.reloadAllTimelines()
 
             if allDailyRecords.count < 90 {
                 let existingDates = Set(loadAllDailyRecords().map {
@@ -687,7 +734,6 @@ class HelixViewModel: ObservableObject {
         }
     }
 
-    #if DEBUG
     var sleepStrand: StrandScore? { indexFromState?.sleepStrand }
     var loadStrand: StrandScore? { indexFromState?.loadStrand }
     var recoveryStrand: StrandScore? { indexFromState?.recoveryStrand }
@@ -695,6 +741,5 @@ class HelixViewModel: ObservableObject {
     var balancePenalty: Double? { indexFromState?.balancePenalty }
     var recoveryGateApplied: Bool { indexFromState?.recoveryGateApplied ?? false }
     var recoveryGateLevel: RecoveryGateLevel? { indexFromState?.recoveryGateLevel }
-    #endif
 }
 

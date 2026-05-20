@@ -3,7 +3,7 @@ import Foundation
 
 private enum DepthTwoLayout {
     /// Between Depth 1 (108) and Depth 3 strand header (~34).
-    static let indexFontSize: CGFloat = 56
+    static let indexFontSize: CGFloat = 36
     /// Top band: anchor chart height + room for upper-left cluster (spec v3).
     static let topSectionMinHeight: CGFloat = HelixDashboardAnchorMetrics.chartHeight + 28
 }
@@ -87,7 +87,8 @@ struct DepthTwoView: View {
                         title: "SLEEP",
                         score: index.sleepStrand.score,
                         confidence: index.sleepStrand.confidence,
-                        color: HelixTheme.sleepColor
+                        color: HelixTheme.sleepColor,
+                        textColor: HelixTheme.sleepTextColor
                     ) {
                         onStrandTap(.sleep)
                     }
@@ -96,7 +97,8 @@ struct DepthTwoView: View {
                         title: "LOAD",
                         score: index.loadStrand.score,
                         confidence: index.loadStrand.confidence,
-                        color: HelixTheme.loadColor
+                        color: HelixTheme.loadColor,
+                        textColor: HelixTheme.loadTextColor
                     ) {
                         onStrandTap(.load)
                     }
@@ -105,7 +107,8 @@ struct DepthTwoView: View {
                         title: "RECOVERY",
                         score: index.recoveryStrand.score,
                         confidence: index.recoveryStrand.confidence,
-                        color: HelixTheme.recoveryColor
+                        color: HelixTheme.recoveryColor,
+                        textColor: HelixTheme.recoveryTextColor
                     ) {
                         onStrandTap(.recovery)
                     }
@@ -439,6 +442,7 @@ private struct DepthTwoStrandRow: View {
     let score: Double
     let confidence: ConfidenceLevel
     let color: Color
+    let textColor: Color
     let onTap: () -> Void
 
     private var normalizedScore: CGFloat {
@@ -469,8 +473,8 @@ private struct DepthTwoStrandRow: View {
                 .frame(height: 2)
 
                 Text("\(Int(score.rounded()))")
-                    .font(.system(size: 19, weight: .thin, design: .rounded))
-                    .foregroundColor(color)
+                    .font(.system(size: 26, weight: .thin, design: .rounded))
+                    .foregroundColor(textColor)
                     .frame(width: 34, alignment: .trailing)
 
                 ConfidenceIndicator(confidence: confidence, style: .dotsOnly)
@@ -569,21 +573,24 @@ struct DepthTwoBottomContent: View {
                     title: "SLEEP",
                     score: index.sleepStrand.score,
                     confidence: index.sleepStrand.confidence,
-                    color: HelixTheme.sleepColor
+                    color: HelixTheme.sleepColor,
+                    textColor: HelixTheme.sleepTextColor
                 ) { onStrandTap(.sleep) }
 
                 DepthTwoStrandRow(
                     title: "LOAD",
                     score: index.loadStrand.score,
                     confidence: index.loadStrand.confidence,
-                    color: HelixTheme.loadColor
+                    color: HelixTheme.loadColor,
+                    textColor: HelixTheme.loadTextColor
                 ) { onStrandTap(.load) }
 
                 DepthTwoStrandRow(
                     title: "RECOVERY",
                     score: index.recoveryStrand.score,
                     confidence: index.recoveryStrand.confidence,
-                    color: HelixTheme.recoveryColor
+                    color: HelixTheme.recoveryColor,
+                    textColor: HelixTheme.recoveryTextColor
                 ) { onStrandTap(.recovery) }
             }
             .padding(.horizontal, 16)

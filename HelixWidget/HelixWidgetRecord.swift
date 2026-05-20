@@ -5,7 +5,7 @@
 import Foundation
 
 /// Snapshot for widget UI — built from the app’s canonical `HelixDailyRecord` in the App Group store.
-struct HelixWidgetDisplayRecord: Sendable {
+struct HelixWidgetDisplayRecord: Codable, Sendable {
     var date: Date = Date()
     var helixIndex: Double = 0.0
     var postureRaw: String = "MODERATE"

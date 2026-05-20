@@ -39,59 +39,71 @@ extension Color {
 // MARK: — Locked palette (authoritative)
 
 enum HelixColor {
-    // Foundation
-    static let background = Color(hex: "#0E1116")
-    static let surface = Color(hex: "#161B22")
-    static let surfaceSecondary = Color(hex: "#1C2330")
-    static let neutral = Color(hex: "#8B949E")
-    static let textPrimary = Color(hex: "#E6EDF3")
+    // ── Foundation (palette shifted one stop) ──────────────────────────────
+    static let background        = Color(hex: "#161B22")  // was #0E1116
+    static let surface           = Color(hex: "#1C2330")  // was #161B22
+    static let surfaceSecondary  = Color(hex: "#222A38")  // was #1C2330, now slightly lighter
+    static let neutral           = Color(hex: "#8B949E")
+    static let textPrimary       = Color(hex: "#E6EDF3")
 
-    // Strands
-    static let sleep = Color(hex: "#4A55A2")
-    static let load = Color(hex: "#00E3FF")
-    static let recovery = Color(hex: "#2E8F6E")
+    // ── Strand accents — visual elements only (dots, bars, radar, borders) ─
+    static let sleep             = Color(hex: "#4A55A2")  // unchanged — accent use only
+    static let load              = Color(hex: "#00E3FF")  // unchanged — all uses
+    static let recovery          = Color(hex: "#2E8F6E")  // unchanged — accent use only
 
-    // Posture
-    static let pursue = Color(hex: "#22C55E")
-    static let moderate = Color(hex: "#F59E0B")
-    static let restore = Color(hex: "#8B5CF6")
+    // ── Strand text tokens — rendered text only ─────────────────────────────
+    // Use these wherever a strand color appears as a label, score, or number.
+    // Never use `sleep` or `recovery` directly for text rendering.
+    static let sleepText         = Color(hex: "#8B96E8")  // 6.3:1 on new bg ✅
+    static let loadText          = Color(hex: "#00E3FF")  // same as load — 11.1:1 ✅
+    static let recoveryText      = Color(hex: "#3DB880")  // 6.9:1 on new bg ✅
 
-    // Confidence
-    static let confidenceHigh = Color(hex: "#2E8F6E")
-    static let confidenceMedium = Color(hex: "#F59E0B")
-    static let confidenceLow = Color(hex: "#F43F5E")
+    // ── Posture ─────────────────────────────────────────────────────────────
+    static let pursue            = Color(hex: "#22C55E")
+    static let moderate          = Color(hex: "#F59E0B")
+    static let restore           = Color(hex: "#8B5CF6")
 
-    // Borders (neutral at 10% and 18% opacity)
-    static let borderSubtle = Color(hex: "#8B949E").opacity(0.10)
-    static let borderStronger = Color(hex: "#8B949E").opacity(0.18)
+    // ── Confidence ──────────────────────────────────────────────────────────
+    static let confidenceHigh    = Color(hex: "#2E8F6E")
+    static let confidenceMedium  = Color(hex: "#F59E0B")
+    static let confidenceLow     = Color(hex: "#F43F5E")
+
+    // ── Borders ─────────────────────────────────────────────────────────────
+    static let borderSubtle      = Color(hex: "#8B949E").opacity(0.10)
+    static let borderStronger    = Color(hex: "#8B949E").opacity(0.18)
 }
 
 // MARK: — Semantic API (views use this; delegates to HelixColor)
 
 enum HelixTheme {
-    // Posture
-    static let pursueColor: Color = HelixColor.pursue
-    static let moderateColor: Color = HelixColor.moderate
-    static let restoreColor: Color = HelixColor.restore
+    // Strands — accent (visual elements)
+    static let sleepColor:        Color = HelixColor.sleep
+    static let loadColor:         Color = HelixColor.load
+    static let recoveryColor:     Color = HelixColor.recovery
 
-    // Confidence
-    static let confidenceHigh: Color = HelixColor.confidenceHigh
-    static let confidenceMedium: Color = HelixColor.confidenceMedium
-    static let confidenceLow: Color = HelixColor.confidenceLow
+    // Strands — text rendering
+    static let sleepTextColor:    Color = HelixColor.sleepText
+    static let loadTextColor:     Color = HelixColor.loadText
+    static let recoveryTextColor: Color = HelixColor.recoveryText
 
-    // Strands
-    static let sleepColor: Color = HelixColor.sleep
-    static let loadColor: Color = HelixColor.load
-    static let recoveryColor: Color = HelixColor.recovery
-
-    // Structural (foundation)
-    static let backgroundPrimary: Color = HelixColor.background
+    // Structural
+    static let backgroundPrimary:   Color = HelixColor.background
     static let backgroundSecondary: Color = HelixColor.surface
-    static let surfaceSecondary: Color = HelixColor.surfaceSecondary
-    static let textPrimary: Color = HelixColor.textPrimary
-    static let textSecondary: Color = HelixColor.neutral
-    static let borderSubtle: Color = HelixColor.borderSubtle
-    static let borderStronger: Color = HelixColor.borderStronger
+    static let surfaceSecondary:    Color = HelixColor.surfaceSecondary
+    static let textPrimary:         Color = HelixColor.textPrimary
+    static let textSecondary:       Color = HelixColor.neutral
+    static let borderSubtle:        Color = HelixColor.borderSubtle
+    static let borderStronger:      Color = HelixColor.borderStronger
+
+    // Posture
+    static let pursueColor:    Color = HelixColor.pursue
+    static let moderateColor:  Color = HelixColor.moderate
+    static let restoreColor:   Color = HelixColor.restore
+
+    // Confidence — own color scheme, independent of strand
+    static let confidenceHigh:   Color = HelixColor.confidenceHigh
+    static let confidenceMedium: Color = HelixColor.confidenceMedium
+    static let confidenceLow:    Color = HelixColor.confidenceLow
 
     // Posture color lookup
     static func color(for posture: HelixPosture) -> Color {
@@ -102,12 +114,21 @@ enum HelixTheme {
         }
     }
 
-    // Strand color lookup
+    // Strand color lookup — returns ACCENT color (visual use)
     static func color(for strand: HelixStrand) -> Color {
         switch strand {
-        case .sleep: return sleepColor
-        case .load: return loadColor
+        case .sleep:    return sleepColor
+        case .load:     return loadColor
         case .recovery: return recoveryColor
+        }
+    }
+
+    // Strand text color lookup — returns TEXT token (label/score use)
+    static func textColor(for strand: HelixStrand) -> Color {
+        switch strand {
+        case .sleep:    return sleepTextColor
+        case .load:     return loadTextColor
+        case .recovery: return recoveryTextColor
         }
     }
 

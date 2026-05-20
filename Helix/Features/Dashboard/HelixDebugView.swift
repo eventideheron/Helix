@@ -1,7 +1,7 @@
 // HelixDebugView.swift
-// Temporary debug panel to inspect ViewModel state. Excluded from Release builds.
+// Temporary debug panel to inspect ViewModel state.
+// Compiled into all configurations so TestFlight builds can surface it via Bundle.isTestFlight.
 
-#if DEBUG
 import SwiftUI
 import UIKit
 
@@ -140,4 +140,3 @@ struct HelixDebugView: View {
         root.present(controller, animated: true)
     }
 }
-#endif

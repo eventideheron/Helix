@@ -221,6 +221,7 @@
     "medium": "One signal unavailable \u2014 score estimated from remaining data.",
     "low": "Multiple signals missing \u2014 this is an estimate. Check that Apple Watch was worn during sleep.",
     "missing_hrv": "HRV not recorded \u2014 autonomic recovery estimated from resting HR and overnight HR dip.",
+    "hrv_device_unavailable": "HRV not recorded \u2014 your device may not write HRV data to Apple Health.",
     "missing_staging": "Sleep staging unavailable \u2014 architecture estimated from duration and disturbance data.",
     "missing_temperature": "Wrist temperature not available on this device \u2014 thermal component excluded from sleep score.",
     "missing_age": "Date of birth not found in Apple Health \u2014 training zones estimated using age 30. Add your date of birth in the Health app for accurate load scoring.",

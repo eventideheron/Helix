@@ -193,11 +193,11 @@ struct SignalContributionRow: View {
                     Spacer()
                     if !contribution.deltaDescription.isEmpty {
                         Text(contribution.deltaDescription)
-                            .font(.caption2)
+                            .font(.footnote)
                             .foregroundColor(HelixTheme.textSecondary)
                     }
                     Text(pointString)
-                        .font(HelixTypography.signalLabel.weight(.light))
+                        .font(.system(size: 18, weight: .light))
                         .foregroundColor(pointColor)
                         .frame(width: 44, alignment: .trailing)
                     // Depth 3 vNext: dot cluster mirrors chevron — same tap target (expand/collapse).

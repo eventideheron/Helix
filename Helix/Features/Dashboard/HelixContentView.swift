@@ -98,6 +98,14 @@ struct HelixContentView: View {
                     HelixDebugView(viewModel: viewModel)
                 }
             }
+            #else
+            if Bundle.isTestFlight {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink("Debug") {
+                        HelixDebugView(viewModel: viewModel)
+                    }
+                }
+            }
             #endif
         }
         .sheet(isPresented: $showingHistory) {

@@ -38,10 +38,6 @@ struct DepthThreeView: View {
         }
     }
 
-    private var strandColor: Color {
-        StrandPresentation(strand: strand.strand).color
-    }
-
     private var posturePresentation: PosturePresentation {
         PosturePresentation(posture: index.posture)
     }
@@ -75,7 +71,7 @@ struct DepthThreeView: View {
                                 .matchedGeometryEffect(id: "helixPosturePill", in: namespace)
 
                             Text("\(Int(index.score.rounded()))")
-                                .font(.system(size: 56, weight: .thin, design: .rounded))
+                                .font(.system(size: 36, weight: .thin, design: .rounded))
                                 .tracking(-2)
                                 .foregroundColor(posturePresentation.color)
                                 .shadow(color: posturePresentation.color.opacity(0.22), radius: 14)
@@ -86,17 +82,21 @@ struct DepthThreeView: View {
 
                         Spacer(minLength: 8)
 
-                        VStack(alignment: .trailing, spacing: 6) {
+                        VStack(alignment: .trailing, spacing: 3) {
+                            // Row 1: confidence chip — aligns with posture pill
                             ConfidenceIndicator(confidence: strand.confidence)
 
-                            Text(strand.strand.displayLabel.uppercased())
-                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                                .tracking(3)
-                                .foregroundColor(strandColor)
-
+                            // Row 2: strand score — aligns with Helix index
                             Text("\(Int(strand.score.rounded()))")
-                                .font(.system(size: 34, weight: .thin, design: .rounded))
-                                .foregroundColor(strandColor)
+                                .font(.system(size: 36, weight: .thin, design: .rounded))
+                                .tracking(-1)
+                                .foregroundColor(HelixTheme.textColor(for: strand.strand))
+
+                            // Row 3: strand name — identifier below score
+                            Text(strand.strand.displayLabel.uppercased())
+                                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                .tracking(3)
+                                .foregroundColor(HelixTheme.textColor(for: strand.strand))
                         }
                         .padding(.trailing, 18)
                         .padding(.top, 12)
@@ -121,7 +121,7 @@ struct DepthThreeView: View {
                 VStack(alignment: .leading, spacing: 0) {
                 if expansionCoordinator.expandedSignal == nil {
                     Text(explanationEngine.resolveForDisplay(strand.primaryExplanation))
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(HelixTheme.textPrimary)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -172,7 +172,7 @@ struct DepthThreeView: View {
 
                     ExpandableSignalBreakdown(
                         contributions: Array(strand.contributionBreakdown.prefix(5)),
-                        color: strandColor,
+                        color: HelixTheme.textColor(for: strand.strand),
                         explanationEngine: explanationEngine,
                         expansion: expansionCoordinator,
                         animationTrigger: signalCardsAnimationTick
@@ -335,7 +335,7 @@ struct DepthThreeRadar: View {
                 context.draw(
                     Text(slot.short)
                         .font(.system(size: slot.isPillar ? 7.5 : 6, design: .monospaced))
-                        .foregroundColor(color(for: slot.strand).opacity(slot.isPillar ? 0.9 : 0.55)),
+                        .foregroundColor(color(for: slot.strand).opacity(slot.isPillar ? 0.92 : 0.80)),
                     at: labelPoint
                 )
             }
@@ -605,10 +605,6 @@ struct DepthThreeTopContent: View {
         }
     }
 
-    private var strandColor: Color {
-        StrandPresentation(strand: strand.strand).color
-    }
-
     private var posturePresentation: PosturePresentation {
         PosturePresentation(posture: index.posture)
     }
@@ -621,7 +617,7 @@ struct DepthThreeTopContent: View {
                         .matchedGeometryEffect(id: "helixPosturePill", in: namespace)
 
                     Text("\(Int(index.score.rounded()))")
-                        .font(.system(size: 56, weight: .thin, design: .rounded))
+                        .font(.system(size: 36, weight: .thin, design: .rounded))
                         .tracking(-2)
                         .foregroundColor(posturePresentation.color)
                         .shadow(color: posturePresentation.color.opacity(0.22), radius: 14)
@@ -630,17 +626,18 @@ struct DepthThreeTopContent: View {
 
                 Spacer(minLength: 8)
 
-                VStack(alignment: .trailing, spacing: 6) {
+                VStack(alignment: .trailing, spacing: 3) {
                     ConfidenceIndicator(confidence: strand.confidence)
 
-                    Text(strand.strand.displayLabel.uppercased())
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .tracking(3)
-                        .foregroundColor(strandColor)
-
                     Text("\(Int(strand.score.rounded()))")
-                        .font(.system(size: 34, weight: .thin, design: .rounded))
-                        .foregroundColor(strandColor)
+                        .font(.system(size: 36, weight: .thin, design: .rounded))
+                        .tracking(-1)
+                        .foregroundColor(HelixTheme.textColor(for: strand.strand))
+
+                    Text(strand.strand.displayLabel.uppercased())
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .tracking(3)
+                        .foregroundColor(HelixTheme.textColor(for: strand.strand))
                 }
                 .offset(y: 60 * strandClusterSlide)
                 .opacity(1.0 - 0.35 * Double(strandClusterSlide))
@@ -671,16 +668,12 @@ struct DepthThreeBottomContent: View {
         }
     }
 
-    private var strandColor: Color {
-        StrandPresentation(strand: strand.strand).color
-    }
-
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
                 if expansion.expandedSignal == nil {
                     Text(explanationEngine.resolveForDisplay(strand.primaryExplanation))
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(HelixTheme.textPrimary)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -731,7 +724,7 @@ struct DepthThreeBottomContent: View {
 
                     ExpandableSignalBreakdown(
                         contributions: Array(strand.contributionBreakdown.prefix(5)),
-                        color: strandColor,
+                        color: HelixTheme.textColor(for: strand.strand),
                         explanationEngine: explanationEngine,
                         expansion: expansion,
                         animationTrigger: signalCardsAnimationTick
